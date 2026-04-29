@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>متابعة حفظ القرآن</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#2E8B57;--gl:#E8F5EE;--gm:#C5E8D4;--gb:#A8D5B8;--gd:#1A6640;
+  --yellow:#C8940A;--yl:#FFFBEA;--ym:#FFF0B0;--yb:#E8D070;
+  --orange:#D4700A;--blue:#2563EB;--bl:#EFF6FF;--bb:#BFDBFE;
+  --gray:#6B7280;--gray-l:#F3F4F6;--gray-b:#E5E7EB;
+  --white:#FFF;--text:#1F2937;--tm:#4B5563;--td:#9CA3AF;
+  --sh:0 2px 12px rgba(0,0,0,.07);--shm:0 6px 24px rgba(0,0,0,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Tajawal',sans-serif;background:#EEF7F2;color:var(--text);min-height:100vh;direction:rtl;overflow-x:hidden;}
+.wrap{max-width:680px;margin:0 auto;padding:0 14px 40px;}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--gb);position:sticky;top:0;z-index:50;box-shadow:var(--sh);}
+.tb{flex:1;padding:12px 4px;font-family:'Tajawal',sans-serif;font-size:.78rem;font-weight:700;color:var(--td);background:transparent;border:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.tb.on{color:var(--gd);border-bottom-color:var(--green);}
+.tp{display:none;padding-top:16px;}
+.tp.on{display:block;}
+
+/* CARD */
+.card{background:#fff;border:1.5px solid var(--gray-b);border-radius:14px;overflow:hidden;box-shadow:var(--sh);margin-bottom:14px;}
+.ch{padding:11px 14px;border-bottom:1.5px solid var(--gray-b);font-family:'Amiri',serif;font-size:1rem;color:var(--gd);background:var(--gl);font-weight:700;display:flex;align-items:center;justify-content:space-between;}
+.cb{padding:13px 14px;}
+
+/* DAY */
+.dh{text-align:center;padding:14px 14px 10px;}
+.dbism{font-family:'Amiri',serif;font-size:1.7rem;color:var(--gd);margin-bottom:3px;}
+.ddate{font-size:.8rem;color:var(--tm);}
+.dhijri{font-size:.7rem;color:var(--td);margin-top:1px;}
+
+/* PLAN BOX */
+.pbox{border-radius:14px;padding:14px;margin-bottom:12px;}
+.phaf{background:var(--gl);border:1.5px solid var(--gb);}
+.prev{background:var(--bl);border:1.5px solid var(--bb);}
+.pbh{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.pic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.pic-h{background:var(--gm);}
+.pic-r{background:var(--bb);}
+.ptitle{font-weight:800;font-size:.9rem;color:var(--gd);}
+.ptitle-r{color:var(--blue);}
+.psub{font-size:.7rem;color:var(--tm);margin-top:2px;}
+
+/* TASK CARD */
+.tc{background:#fff;border-radius:10px;padding:11px 13px;margin-bottom:10px;}
+.tc-h{border:1px solid var(--gb);}
+.tc-r{border:1px solid var(--bb);}
+.ts{font-family:'Amiri',serif;font-size:1.1rem;color:var(--text);font-weight:700;}
+.tr{font-size:.72rem;color:var(--tm);margin-top:3px;}
+.tbw{background:var(--gray-l);border-radius:100px;height:6px;overflow:hidden;margin-top:6px;}
+.tbg{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--gd),var(--green));transition:width .5s;}
+.tbb{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--blue),#60A5FA);transition:width .5s;}
+.done-b{display:inline-flex;align-items:center;gap:4px;background:var(--gm);color:var(--gd);border:1.5px solid var(--gb);border-radius:20px;padding:3px 10px;font-size:.7rem;font-weight:700;margin-top:6px;}
+.done-br{background:var(--bl);color:var(--blue);border-color:var(--bb);}
+
+/* WAJH BADGE */
+.wbadge{display:inline-flex;align-items:center;gap:5px;background:var(--ym);color:#6A4A00;border:1.5px solid var(--yb);border-radius:8px;padding:4px 10px;font-size:.75rem;font-weight:700;margin-bottom:8px;}
+.wbadge-r{background:var(--bl);color:#1E40AF;border-color:var(--bb);}
+
+/* COMPLETE BTN */
+.cbtn{width:100%;padding:12px;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.cbtn-h{background:var(--green);color:#fff;}
+.cbtn-h.done{background:var(--gm);color:var(--gd);border:1.5px solid var(--gb);}
+.cbtn-r{background:var(--blue);color:#fff;}
+.cbtn-r.done{background:var(--bl);color:var(--blue);border:1.5px solid var(--bb);}
+
+/* STREAK */
+.sdisp{text-align:center;padding:4px 0 6px;}
+.scnt{font-size:2.6rem;font-weight:900;color:var(--orange);line-height:1;}
+.slbl{font-size:.7rem;color:var(--td);margin-top:2px;}
+.wdots{display:flex;gap:4px;justify-content:center;margin-top:8px;}
+.wd{width:34px;height:34px;border-radius:8px;background:var(--gray-l);border:1.5px solid var(--gray-b);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--td);font-weight:700;transition:all .2s;}
+.wd.done{background:var(--gm);border-color:var(--gb);color:var(--gd);}
+.wd.today{border-color:var(--green);color:var(--green);background:var(--gl);}
+
+/* STATS */
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.sc{background:#fff;border:1.5px solid var(--gray-b);border-radius:14px;padding:13px 12px;text-align:center;box-shadow:var(--sh);position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.s1::before{background:var(--green);}.s2::before{background:var(--orange);}
+.s3::before{background:var(--yellow);}.s4::before{background:var(--blue);}
+.sn{font-size:2rem;font-weight:900;line-height:1;margin-bottom:3px;}
+.s1 .sn{color:var(--green);}.s2 .sn{color:var(--orange);}
+.s3 .sn{color:var(--yellow);}.s4 .sn{color:var(--blue);}
+.sl{font-size:.7rem;color:var(--tm);font-weight:600;}
+.pbar-sec{background:#fff;border:1.5px solid var(--gb);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:var(--sh);}
+.pbw{background:var(--gl);border-radius:100px;height:11px;overflow:hidden;margin:8px 0 5px;border:1px solid var(--gm);}
+.pbf{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--gd),var(--green),#5CB87A);transition:width .8s;}
+.plbls{display:flex;justify-content:space-between;font-size:.68rem;color:var(--td);}
+.ppct{font-weight:800;color:var(--green);font-size:1rem;}
+
+/* SURAHS */
+.ftabs{display:flex;gap:5px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--gray-b);background:var(--gl);}
+.ft{font-family:'Tajawal',sans-serif;font-size:.68rem;padding:5px 9px;border-radius:20px;border:1.5px solid var(--gray-b);background:#fff;color:var(--tm);cursor:pointer;font-weight:600;transition:all .2s;}
+.ft.on,.ft:hover{background:var(--green);color:#fff;border-color:var(--green);}
+.ft.fr.on,.ft.fr:hover{background:var(--orange);border-color:var(--orange);}
+.scard{padding:11px 14px;border-bottom:1px solid var(--gray-b);}
+.scard:last-child{border-bottom:none;}
+.sctop{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+.snum{width:26px;height:26px;background:var(--gray-l);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:var(--tm);flex-shrink:0;}
+.sname{font-family:'Amiri',serif;font-size:1rem;color:var(--text);flex:1;}
+.smeta{font-size:.62rem;color:var(--td);}
+.abtn{background:var(--gl);border:1.5px solid var(--gb);color:var(--gd);border-radius:7px;padding:6px 11px;font-size:.7rem;cursor:pointer;font-family:'Tajawal',sans-serif;font-weight:700;white-space:nowrap;flex-shrink:0;}
+.abtn:active{background:var(--green);color:#fff;}
+.sbadges{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.bg{background:var(--gray-l);border-radius:8px;padding:6px 9px;}
+.bgl{font-size:.58rem;color:var(--td);font-weight:700;margin-bottom:3px;}
+.badge{display:inline-block;font-size:.65rem;padding:2px 8px;border-radius:20px;font-weight:700;border:1.5px solid transparent;}
+.bhn{background:var(--gray-l);color:var(--td);border-color:var(--gray-b);}
+.bhp{background:var(--ym);color:#6A4A00;border-color:var(--yb);}
+.bhd{background:var(--gm);color:var(--gd);border-color:var(--gb);}
+.brn{background:var(--gray-l);color:var(--td);border-color:var(--gray-b);}
+.brp{background:var(--bl);color:#1E40AF;border-color:var(--bb);}
+.brr{background:#FFE0C0;color:#7A3800;border-color:#FFBB80;}
+.brd{background:var(--gm);color:var(--gd);border-color:var(--gb);}
+.mbw{background:#fff;border-radius:100px;height:5px;overflow:hidden;margin-top:3px;border:1px solid var(--gray-b);}
+.mbh{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--yellow),#E8C030);}
+.mbr{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--blue),#60A5FA);}
+.leg{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:8px 14px;background:var(--yl);border-top:1px solid var(--yb);font-size:.63rem;color:var(--tm);}
+.li{display:flex;align-items:center;gap:3px;}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* SETTINGS */
+.slrow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--gray-b);}
+.slrow:last-child{border-bottom:none;}
+.sllbl{font-size:.82rem;font-weight:700;}
+.slsub{font-size:.67rem;color:var(--td);margin-top:2px;}
+.slinput{background:#fff;border:1.5px solid var(--gray-b);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:.84rem;outline:none;text-align:center;width:75px;}
+.slinput:focus{border-color:var(--green);}
+.slsel{width:100%;background:#fff;border:1.5px solid var(--gray-b);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:.86rem;outline:none;direction:rtl;margin-top:5px;}
+.slsel:focus{border-color:var(--green);}
+.seclbl{font-size:.72rem;font-weight:800;color:var(--tm);margin:14px 0 4px;display:flex;align-items:center;gap:5px;}
+.savebtn{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:14px;}
+
+/* SYNC */
+.syncbar{background:var(--yl);border:1.5px solid var(--yb);border-radius:12px;padding:11px 13px;margin-bottom:14px;}
+.synct{font-weight:800;color:var(--yellow);font-size:.8rem;margin-bottom:6px;}
+.syncbtns{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.syncbtn{font-family:'Tajawal',sans-serif;font-size:.76rem;font-weight:700;padding:9px;border-radius:9px;cursor:pointer;text-align:center;border:none;}
+.syncc{background:var(--green);color:#fff;}
+.synci{background:#fff;color:var(--tm);border:1.5px solid var(--gray-b)!important;}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+.mo.on{opacity:1;pointer-events:all;}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:18px 16px 34px;width:100%;max-width:600px;box-shadow:var(--shm);transform:translateY(100%);transition:transform .35s cubic-bezier(.22,1,.36,1);max-height:92vh;overflow-y:auto;}
+.mo.on .modal{transform:translateY(0);}
+.mh{width:38px;height:4px;background:var(--gray-b);border-radius:100px;margin:0 auto 14px;}
+.mt{font-family:'Amiri',serif;font-size:1.2rem;color:var(--gd);margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--gm);}
+.ms{background:var(--gray-l);border:1.5px solid var(--gray-b);border-radius:11px;padding:12px 13px;margin-bottom:10px;}
+.mstl{font-size:.78rem;font-weight:800;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+.mh-c{color:var(--gd);}.mr-c{color:var(--blue);}
+.fg{margin-bottom:9px;}.fg:last-child{margin-bottom:0;}
+.fl{display:block;font-size:.72rem;color:var(--tm);margin-bottom:3px;font-weight:600;}
+.fsel,.finp{width:100%;background:#fff;border:1.5px solid var(--gray-b);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;direction:rtl;}
+.fsel:focus,.finp:focus{border-color:var(--green);}
+.ar{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.pp{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.72rem;color:var(--tm);}
+.ppbar{flex:1;height:6px;background:var(--gray-l);border-radius:100px;overflow:hidden;border:1px solid var(--gray-b);}
+.pph{height:100%;background:linear-gradient(90deg,var(--yellow),#E8C030);border-radius:100px;transition:width .3s;}
+.ppr{height:100%;background:linear-gradient(90deg,var(--blue),#60A5FA);border-radius:100px;transition:width .3s;}
+.brow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+.bp{background:var(--green);color:#fff;border:none;border-radius:10px;padding:12px;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;}
+.bs{background:transparent;color:var(--tm);border:1.5px solid var(--gray-b);border-radius:10px;padding:12px;font-family:'Tajawal',sans-serif;font-size:.9rem;cursor:pointer;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--gd);color:#fff;border-radius:11px;padding:10px 20px;font-size:.84rem;font-weight:600;z-index:200;opacity:0;transition:all .4s cubic-bezier(.22,1,.36,1);pointer-events:none;white-space:nowrap;}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1;}
+
+.sumr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray-b);font-size:.77rem;}
+.sumr:last-child{border-bottom:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="tabs">
+  <button class="tb on" onclick="SW('today',this)">📅 اليوم</button>
+  <button class="tb" onclick="SW('surahs',this)">📖 السور</button>
+  <button class="tb" onclick="SW('stats',this)">📊 إحصائيات</button>
+  <button class="tb" onclick="SW('settings',this)">⚙️ إعدادات</button>
+</nav>
+
+<!-- TODAY -->
+<div class="tp on" id="tp-today">
+  <div class="dh">
+    <div class="dbism">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+    <div class="ddate" id="dayDate"></div>
+    <div class="dhijri" id="dayHijri"></div>
+  </div>
+
+  <div class="pbox phaf">
+    <div class="pbh">
+      <div class="pic pic-h">📗</div>
+      <div><div class="ptitle">حفظ اليوم</div><div class="psub" id="hSub">—</div></div>
+    </div>
+    <div class="tc tc-h" id="hCard"></div>
+    <button class="cbtn cbtn-h" id="hBtn" onclick="doHaf()">✓ أنهيت حفظ اليوم</button>
+  </div>
+
+  <div class="pbox prev">
+    <div class="pbh">
+      <div class="pic pic-r">🔄</div>
+      <div><div class="ptitle ptitle-r">مراجعة اليوم</div><div class="psub" id="rSub">—</div></div>
+    </div>
+    <div class="tc tc-r" id="rCard"></div>
+    <button class="cbtn cbtn-r" id="rBtn" onclick="doRev()">✓ أنهيت المراجعة</button>
+  </div>
+
+  <div class="card">
+    <div class="ch">🔥 السلسلة اليومية</div>
+    <div class="cb">
+      <div class="sdisp"><div class="scnt" id="streakN">0</div><div class="slbl">يوم متتالي</div></div>
+      <div class="wdots" id="wdots"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SURAHS -->
+<div class="tp" id="tp-surahs">
+  <div class="card">
+    <div class="ch">قائمة السور — 114 سورة</div>
+    <div class="ftabs">
+      <button class="ft on" onclick="FS('all',this)">الكل</button>
+      <button class="ft" onclick="FS('hd',this)">محفوظة</button>
+      <button class="ft" onclick="FS('hp',this)">جزئي</button>
+      <button class="ft fr" onclick="FS('rv',this)">مراجعة</button>
+      <button class="ft" onclick="FS('nn',this)">لم تُحفظ</button>
+    </div>
+    <div id="sList"></div>
+    <div class="leg">
+      <b style="color:var(--gd)">دليل:</b>
+      <span class="li"><span class="ld" style="background:var(--green)"></span>محفوظة</span>
+      <span class="li"><span class="ld" style="background:var(--yellow)"></span>جزئي</span>
+      <span class="li"><span class="ld" style="background:var(--orange)"></span>مراجعة</span>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="tp" id="tp-stats">
+  <div class="srow">
+    <div class="sc s1"><div class="sn" id="stM">0</div><div class="sl">📗 سورة محفوظة</div></div>
+    <div class="sc s2"><div class="sn" id="stR">0</div><div class="sl">🔄 تحتاج مراجعة</div></div>
+    <div class="sc s3"><div class="sn" id="stP">0</div><div class="sl">📝 حفظ جزئي</div></div>
+    <div class="sc s4"><div class="sn" id="stS">0</div><div class="sl">🔥 أيام متتالية</div></div>
+  </div>
+  <div class="pbar-sec">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Amiri',serif;font-size:1.05rem;color:var(--gd)">📖 التقدم العام</span>
+      <span id="pLbl" class="ppct">0%</span>
+    </div>
+    <div class="pbw"><div class="pbf" id="gbar" style="width:0%"></div></div>
+    <div class="plbls"><span>البداية</span><span id="pSur">0/114</span><span>الختم</span></div>
+  </div>
+  <div class="card">
+    <div class="ch">ملخص</div>
+    <div class="cb" id="sumBody"></div>
+  </div>
+  <div class="syncbar">
+    <div class="synct">🔗 المزامنة بين الأجهزة</div>
+    <div style="font-size:.71rem;color:var(--tm);margin-bottom:7px">انسخ الرابط وافتحه من أي جهاز</div>
+    <div class="syncbtns">
+      <button class="syncbtn syncc" onclick="copyL()">📋 نسخ رابط البيانات</button>
+      <button class="syncbtn synci" onclick="importL()">📥 استيراد من رابط</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="tp" id="tp-settings">
+  <div class="card">
+    <div class="ch">⚙️ الخطة اليومية — بالأوجه</div>
+    <div class="cb">
+
+      <div class="seclbl">📗 إعدادات الحفظ</div>
+      <div class="slrow">
+        <div><div class="sllbl">عدد الأوجه حفظاً يومياً</div><div class="slsub">كل وجه = صفحة واحدة من مصحف الملك فهد</div></div>
+        <input type="number" class="slinput" id="sHW" min="1" max="20" value="1">
+      </div>
+      <div style="margin-top:10px">
+        <div class="sllbl" style="font-size:.8rem">ابدأ الحفظ من الوجه رقم</div>
+        <div class="slsub" style="margin-bottom:6px">اختر الوجه (الصفحة) الذي ستبدأ منه — يُحسب تلقائياً كل يوم</div>
+        <select class="slsel" id="sHPage"></select>
+        <div id="sHPageInfo" style="margin-top:5px;font-size:.72rem;color:var(--gd);font-weight:700;background:var(--gl);border-radius:8px;padding:6px 10px;"></div>
+      </div>
+
+      <div class="seclbl" style="margin-top:18px">🔄 إعدادات المراجعة</div>
+      <div class="slrow">
+        <div><div class="sllbl">عدد الأوجه مراجعةً يومياً</div><div class="slsub">عدد الأوجه التي تراجعها كل يوم</div></div>
+        <input type="number" class="slinput" id="sRW" min="1" max="30" value="2">
+      </div>
+      <div style="margin-top:10px">
+        <div class="sllbl" style="font-size:.8rem">ابدأ المراجعة من الوجه رقم</div>
+        <div class="slsub" style="margin-bottom:6px">اختر الوجه الذي ستبدأ مراجعته — يتقدم تلقائياً كل يوم</div>
+        <select class="slsel" id="sRPage"></select>
+        <div id="sRPageInfo" style="margin-top:5px;font-size:.72rem;color:var(--blue);font-weight:700;background:var(--bl);border-radius:8px;padding:6px 10px;"></div>
+      </div>
+
+      <button class="savebtn" onclick="saveS()">💾 حفظ الإعدادات وتحديث الخطة</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">📝 ملاحظات</div>
+    <div class="cb">
+      <textarea id="qNote" style="width:100%;background:#fff;border:1.5px solid var(--gray-b);border-radius:9px;padding:10px 12px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:.85rem;outline:none;resize:vertical;min-height:75px;direction:rtl;" placeholder="اكتب ملاحظاتك..."></textarea>
+      <button class="savebtn" onclick="saveNote()" style="margin-top:8px">حفظ</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="mo" id="mOverlay">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt" id="mTitle"></div>
+    <div class="ms">
+      <div class="mstl mh-c">📗 الحفظ</div>
+      <div class="fg"><label class="fl">حالة الحفظ</label>
+        <select class="fsel" id="mHS" onchange="mHC()">
+          <option value="none">لم أحفظها بعد</option>
+          <option value="partial">حفظ جزئي</option>
+          <option value="done">محفوظة كاملة ✓</option>
+        </select>
+      </div>
+      <div id="mHP" style="display:none">
+        <div class="fg"><label class="fl">الآيات المحفوظة</label>
+          <div class="ar">
+            <div><label class="fl" style="font-size:.65rem">من</label><input type="number" class="finp" id="mHF" min="1" oninput="uMH()"></div>
+            <div><label class="fl" style="font-size:.65rem">إلى</label><input type="number" class="finp" id="mHT" min="1" oninput="uMH()"></div>
+          </div>
+          <div class="pp"><span id="mHPct" style="font-weight:700;color:var(--yellow)">0%</span><div class="ppbar"><div class="pph" id="mHFl" style="width:0%"></div></div><span id="mHCt" style="color:var(--td)">0 آية</span></div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">جودة الحفظ</label>
+        <select class="fsel" id="mHQ">
+          <option value="5">⭐⭐⭐⭐⭐ ممتاز</option><option value="4">⭐⭐⭐⭐ جيد جداً</option>
+          <option value="3" selected>⭐⭐⭐ جيد</option><option value="2">⭐⭐ مقبول</option><option value="1">⭐ يحتاج إعادة</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">ملاحظة</label><input type="text" class="finp" id="mHN" placeholder="مثال: ضعف في آية 20"></div>
+    </div>
+    <div class="ms">
+      <div class="mstl mr-c">🔄 المراجعة</div>
+      <div class="fg"><label class="fl">حالة المراجعة</label>
+        <select class="fsel" id="mRS" onchange="mRC()">
+          <option value="none">لا تنطبق</option>
+          <option value="needed">تحتاج مراجعة 🔄</option>
+          <option value="partial">راجعت جزءاً</option>
+          <option value="done">راجعتها ✓</option>
+        </select>
+      </div>
+      <div id="mRP" style="display:none">
+        <div class="fg"><label class="fl">الآيات التي راجعتها</label>
+          <div class="ar">
+            <div><label class="fl" style="font-size:.65rem">من</label><input type="number" class="finp" id="mRF" min="1" oninput="uMR()"></div>
+            <div><label class="fl" style="font-size:.65rem">إلى</label><input type="number" class="finp" id="mRT" min="1" oninput="uMR()"></div>
+          </div>
+          <div class="pp"><span id="mRPct" style="font-weight:700;color:var(--blue)">0%</span><div class="ppbar"><div class="ppr" id="mRFl" style="width:0%"></div></div><span id="mRCt" style="color:var(--td)">0 آية</span></div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">آخر مراجعة</label><input type="date" class="finp" id="mRD"></div>
+      <div class="fg"><label class="fl">ملاحظة</label><input type="text" class="finp" id="mRN" placeholder="مثال: راجعتها في الفجر"></div>
+    </div>
+    <div class="brow">
+      <button class="bp" onclick="saveM()">💾 حفظ</button>
+      <button class="bs" onclick="closeM()">إلغاء</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const WAJH=[[1,1,1,1,7],[2,2,1,2,6],[3,2,7,2,12],[4,2,13,2,18],[5,2,19,2,24],[6,2,25,2,30],[7,2,31,2,36],[8,2,37,2,42],[9,2,43,2,48],[10,2,49,2,54],[11,2,55,2,60],[12,2,61,2,66],[13,2,67,2,72],[14,2,73,2,77],[15,2,78,2,83],[16,2,84,2,89],[17,2,90,2,95],[18,2,96,2,101],[19,2,102,2,107],[20,2,108,2,113],[21,2,114,2,119],[22,2,120,2,125],[23,2,126,2,131],[24,2,132,2,137],[25,2,138,2,143],[26,2,144,2,149],[27,2,150,2,155],[28,2,156,2,161],[29,2,162,2,167],[30,2,168,2,173],[31,2,174,2,179],[32,2,180,2,185],[33,2,186,2,191],[34,2,192,2,197],[35,2,198,2,203],[36,2,204,2,209],[37,2,210,2,214],[38,2,215,2,220],[39,2,221,2,226],[40,2,227,2,232],[41,2,233,2,238],[42,2,239,2,244],[43,2,245,2,250],[44,2,251,2,256],[45,2,257,2,262],[46,2,263,2,268],[47,2,269,2,274],[48,2,275,2,280],[49,2,281,2,286],[50,3,1,3,7],[51,3,8,3,15],[52,3,16,3,22],[53,3,23,3,30],[54,3,31,3,37],[55,3,38,3,44],[56,3,45,3,52],[57,3,53,3,59],[58,3,60,3,67],[59,3,68,3,74],[60,3,75,3,81],[61,3,82,3,89],[62,3,90,3,96],[63,3,97,3,104],[64,3,105,3,111],[65,3,112,3,119],[66,3,120,3,126],[67,3,127,3,133],[68,3,134,3,141],[69,3,142,3,148],[70,3,149,3,156],[71,3,157,3,163],[72,3,164,3,170],[73,3,171,3,178],[74,3,179,3,185],[75,3,186,3,193],[76,3,194,3,200],[77,4,1,4,6],[78,4,7,4,12],[79,4,13,4,18],[80,4,19,4,24],[81,4,25,4,30],[82,4,31,4,36],[83,4,37,4,42],[84,4,43,4,49],[85,4,50,4,55],[86,4,56,4,61],[87,4,62,4,67],[88,4,68,4,73],[89,4,74,4,79],[90,4,80,4,85],[91,4,86,4,91],[92,4,92,4,97],[93,4,98,4,103],[94,4,104,4,109],[95,4,110,4,115],[96,4,116,4,121],[97,4,122,4,127],[98,4,128,4,134],[99,4,135,4,140],[100,4,141,4,146],[101,4,147,4,152],[102,4,153,4,158],[103,4,159,4,164],[104,4,165,4,170],[105,4,171,4,176],[106,5,1,5,5],[107,5,6,5,11],[108,5,12,5,16],[109,5,17,5,22],[110,5,23,5,27],[111,5,28,5,33],[112,5,34,5,38],[113,5,39,5,44],[114,5,45,5,49],[115,5,50,5,55],[116,5,56,5,60],[117,5,61,5,65],[118,5,66,5,71],[119,5,72,5,76],[120,5,77,5,82],[121,5,83,5,87],[122,5,88,5,93],[123,5,94,5,98],[124,5,99,5,104],[125,5,105,5,109],[126,5,110,5,115],[127,5,116,5,120],[128,6,1,6,7],[129,6,8,6,14],[130,6,15,6,22],[131,6,23,6,29],[132,6,30,6,36],[133,6,37,6,43],[134,6,44,6,50],[135,6,51,6,57],[136,6,58,6,65],[137,6,66,6,72],[138,6,73,6,79],[139,6,80,6,86],[140,6,87,6,93],[141,6,94,6,100],[142,6,101,6,108],[143,6,109,6,115],[144,6,116,6,122],[145,6,123,6,129],[146,6,130,6,136],[147,6,137,6,143],[148,6,144,6,151],[149,6,152,6,158],[150,6,159,6,165],[151,7,1,7,8],[152,7,9,7,16],[153,7,17,7,24],[154,7,25,7,32],[155,7,33,7,40],[156,7,41,7,48],[157,7,49,7,55],[158,7,56,7,63],[159,7,64,7,71],[160,7,72,7,79],[161,7,80,7,87],[162,7,88,7,95],[163,7,96,7,103],[164,7,104,7,111],[165,7,112,7,119],[166,7,120,7,127],[167,7,128,7,135],[168,7,136,7,143],[169,7,144,7,151],[170,7,152,7,158],[171,7,159,7,166],[172,7,167,7,174],[173,7,175,7,182],[174,7,183,7,190],[175,7,191,7,198],[176,7,199,7,206],[177,8,1,8,8],[178,8,9,8,15],[179,8,16,8,22],[180,8,23,8,30],[181,8,31,8,38],[182,8,39,8,45],[183,8,46,8,52],[184,8,53,8,60],[185,8,61,8,68],[186,8,69,8,75],[187,9,1,9,6],[188,9,7,9,12],[189,9,13,9,18],[190,9,19,9,25],[191,9,26,9,31],[192,9,32,9,37],[193,9,38,9,43],[194,9,44,9,49],[195,9,50,9,55],[196,9,56,9,61],[197,9,62,9,68],[198,9,69,9,74],[199,9,75,9,80],[200,9,81,9,86],[201,9,87,9,92],[202,9,93,9,98],[203,9,99,9,104],[204,9,105,9,111],[205,9,112,9,117],[206,9,118,9,123],[207,9,124,9,129],[208,10,1,10,8],[209,10,9,10,17],[210,10,18,10,25],[211,10,26,10,34],[212,10,35,10,42],[213,10,43,10,50],[214,10,51,10,59],[215,10,60,10,67],[216,10,68,10,75],[217,10,76,10,84],[218,10,85,10,92],[219,10,93,10,101],[220,10,102,10,109],[221,11,1,11,9],[222,11,10,11,18],[223,11,19,11,26],[224,11,27,11,35],[225,11,36,11,44],[226,11,45,11,53],[227,11,54,11,62],[228,11,63,11,70],[229,11,71,11,79],[230,11,80,11,88],[231,11,89,11,97],[232,11,98,11,105],[233,11,106,11,114],[234,11,115,11,123],[235,12,1,12,8],[236,12,9,12,16],[237,12,17,12,24],[238,12,25,12,32],[239,12,33,12,40],[240,12,41,12,48],[241,12,49,12,56],[242,12,57,12,63],[243,12,64,12,71],[244,12,72,12,79],[245,12,80,12,87],[246,12,88,12,95],[247,12,96,12,103],[248,12,104,12,111],[249,13,1,13,7],[250,13,8,13,14],[251,13,15,13,22],[252,13,23,13,29],[253,13,30,13,36],[254,13,37,13,43],[255,14,1,14,7],[256,14,8,14,15],[257,14,16,14,22],[258,14,23,14,30],[259,14,31,14,37],[260,14,38,14,45],[261,14,46,14,52],[262,15,1,15,20],[263,15,21,15,40],[264,15,41,15,59],[265,15,60,15,79],[266,15,80,15,99],[267,16,1,16,9],[268,16,10,16,17],[269,16,18,16,26],[270,16,27,16,34],[271,16,35,16,43],[272,16,44,16,51],[273,16,52,16,60],[274,16,61,16,68],[275,16,69,16,77],[276,16,78,16,85],[277,16,86,16,94],[278,16,95,16,102],[279,16,103,16,111],[280,16,112,16,119],[281,16,120,16,128],[282,17,1,17,10],[283,17,11,17,20],[284,17,21,17,30],[285,17,31,17,40],[286,17,41,17,50],[287,17,51,17,61],[288,17,62,17,71],[289,17,72,17,81],[290,17,82,17,91],[291,17,92,17,101],[292,17,102,17,111],[293,18,1,18,9],[294,18,10,18,18],[295,18,19,18,28],[296,18,29,18,37],[297,18,38,18,46],[298,18,47,18,55],[299,18,56,18,64],[300,18,65,18,73],[301,18,74,18,82],[302,18,83,18,92],[303,18,93,18,101],[304,18,102,18,110],[305,19,1,19,14],[306,19,15,19,28],[307,19,29,19,42],[308,19,43,19,56],[309,19,57,19,70],[310,19,71,19,84],[311,19,85,19,98],[312,20,1,20,14],[313,20,15,20,27],[314,20,28,20,40],[315,20,41,20,54],[316,20,55,20,68],[317,20,69,20,81],[318,20,82,20,94],[319,20,95,20,108],[320,20,109,20,122],[321,20,123,20,135],[322,21,1,21,11],[323,21,12,21,22],[324,21,23,21,34],[325,21,35,21,45],[326,21,46,21,56],[327,21,57,21,67],[328,21,68,21,78],[329,21,79,21,90],[330,21,91,21,101],[331,21,102,21,112],[332,22,1,22,8],[333,22,9,22,16],[334,22,17,22,23],[335,22,24,22,31],[336,22,32,22,39],[337,22,40,22,47],[338,22,48,22,55],[339,22,56,22,62],[340,22,63,22,70],[341,22,71,22,78],[342,23,1,23,15],[343,23,16,23,30],[344,23,31,23,44],[345,23,45,23,59],[346,23,60,23,74],[347,23,75,23,88],[348,23,89,23,103],[349,23,104,23,118],[350,24,1,24,7],[351,24,8,24,14],[352,24,15,24,21],[353,24,22,24,28],[354,24,29,24,36],[355,24,37,24,43],[356,24,44,24,50],[357,24,51,24,57],[358,24,58,24,64],[359,25,1,25,10],[360,25,11,25,19],[361,25,20,25,29],[362,25,30,25,38],[363,25,39,25,48],[364,25,49,25,58],[365,25,59,25,67],[366,25,68,25,77],[367,26,1,26,23],[368,26,24,26,45],[369,26,46,26,68],[370,26,69,26,91],[371,26,92,26,114],[372,26,115,26,136],[373,26,137,26,159],[374,26,160,26,182],[375,26,183,26,204],[376,26,205,26,227],[377,27,1,27,12],[378,27,13,27,23],[379,27,24,27,35],[380,27,36,27,46],[381,27,47,27,58],[382,27,59,27,70],[383,27,71,27,81],[384,27,82,27,93],[385,28,1,28,8],[386,28,9,28,16],[387,28,17,28,24],[388,28,25,28,32],[389,28,33,28,40],[390,28,41,28,48],[391,28,49,28,56],[392,28,57,28,64],[393,28,65,28,72],[394,28,73,28,80],[395,28,81,28,88],[396,29,1,29,9],[397,29,10,29,17],[398,29,18,29,26],[399,29,27,29,34],[400,29,35,29,43],[401,29,44,29,52],[402,29,53,29,60],[403,29,61,29,69],[404,30,1,30,9],[405,30,10,30,17],[406,30,18,30,26],[407,30,27,30,34],[408,30,35,30,43],[409,30,44,30,51],[410,30,52,30,60],[411,31,1,31,8],[412,31,9,31,17],[413,31,18,31,26],[414,31,27,31,34],[415,32,1,32,10],[416,32,11,32,20],[417,32,21,32,30],[418,33,1,33,7],[419,33,8,33,15],[420,33,16,33,22],[421,33,23,33,29],[422,33,30,33,36],[423,33,37,33,44],[424,33,45,33,51],[425,33,52,33,58],[426,33,59,33,66],[427,33,67,33,73],[428,34,1,34,9],[429,34,10,34,18],[430,34,19,34,27],[431,34,28,34,36],[432,34,37,34,45],[433,34,46,34,54],[434,35,1,35,8],[435,35,9,35,15],[436,35,16,35,22],[437,35,23,35,30],[438,35,31,35,38],[439,35,39,35,45],[440,36,1,36,14],[441,36,15,36,28],[442,36,29,36,42],[443,36,43,36,55],[444,36,56,36,69],[445,36,70,36,83],[446,37,1,37,26],[447,37,27,37,52],[448,37,53,37,78],[449,37,79,37,104],[450,37,105,37,130],[451,37,131,37,156],[452,37,157,37,182],[453,38,1,38,18],[454,38,19,38,35],[455,38,36,38,53],[456,38,54,38,70],[457,38,71,38,88],[458,39,1,39,8],[459,39,9,39,17],[460,39,18,39,25],[461,39,26,39,33],[462,39,34,39,42],[463,39,43,39,50],[464,39,51,39,58],[465,39,59,39,67],[466,39,68,39,75],[467,40,1,40,8],[468,40,9,40,17],[469,40,18,40,26],[470,40,27,40,34],[471,40,35,40,42],[472,40,43,40,51],[473,40,52,40,60],[474,40,61,40,68],[475,40,69,40,76],[476,40,77,40,85],[477,41,1,41,9],[478,41,10,41,18],[479,41,19,41,27],[480,41,28,41,36],[481,41,37,41,45],[482,41,46,41,54],[483,42,1,42,9],[484,42,10,42,18],[485,42,19,42,26],[486,42,27,42,35],[487,42,36,42,44],[488,42,45,42,53],[489,43,1,43,13],[490,43,14,43,25],[491,43,26,43,38],[492,43,39,43,51],[493,43,52,43,64],[494,43,65,43,76],[495,43,77,43,89],[496,44,1,44,20],[497,44,21,44,39],[498,44,40,44,59],[499,45,1,45,12],[500,45,13,45,25],[501,45,26,45,37],[502,46,1,46,7],[503,46,8,46,14],[504,46,15,46,21],[505,46,22,46,28],[506,46,29,46,35],[507,47,1,47,10],[508,47,11,47,19],[509,47,20,47,28],[510,47,29,47,38],[511,48,1,48,7],[512,48,8,48,14],[513,48,15,48,22],[514,48,23,48,29],[515,49,1,49,6],[516,49,7,49,12],[517,49,13,49,18],[518,50,1,50,22],[519,50,23,50,45],[520,51,1,51,20],[521,51,21,51,40],[522,51,41,51,60],[523,52,1,52,16],[524,52,17,52,33],[525,52,34,52,49],[526,53,1,53,31],[527,53,32,53,62],[528,54,1,54,18],[529,54,19,54,37],[530,54,38,54,55],[531,55,1,55,26],[532,55,27,55,52],[533,55,53,55,78],[534,56,1,56,32],[535,56,33,56,64],[536,56,65,56,96],[537,57,1,57,6],[538,57,7,57,12],[539,57,13,57,17],[540,57,18,57,23],[541,57,24,57,29],[542,58,1,58,7],[543,58,8,58,15],[544,58,16,58,22],[545,59,1,59,6],[546,59,7,59,12],[547,59,13,59,18],[548,59,19,59,24],[549,60,1,60,6],[550,60,7,60,13],[551,61,1,61,7],[552,61,8,61,14],[553,62,1,62,11],[554,63,1,63,6],[555,63,7,63,11],[556,64,1,64,9],[557,64,10,64,18],[558,65,1,65,6],[559,65,7,65,12],[560,66,1,66,6],[561,66,7,66,12],[562,67,1,67,15],[563,67,16,67,30],[564,68,1,68,26],[565,68,27,68,52],[566,69,1,69,26],[567,69,27,69,52],[568,70,1,70,22],[569,70,23,70,44],[570,71,1,71,14],[571,71,15,71,28],[572,72,1,72,14],[573,72,15,72,28],[574,73,1,73,20],[575,74,1,74,28],[576,74,29,74,56],[577,75,1,75,40],[578,76,1,76,16],[579,76,17,76,31],[580,77,1,77,25],[581,77,26,77,50],[582,78,1,78,40],[583,79,1,79,23],[584,79,24,79,46],[585,80,1,80,42],[586,81,1,81,29],[587,82,1,82,19],[588,83,19,83,36],[589,84,1,84,25],[590,85,1,85,22],[591,86,1,86,17],[592,88,1,88,26],[593,89,1,89,30],[594,90,1,90,20],[595,91,1,91,15],[596,93,1,93,11],[597,95,1,95,8],[598,97,1,97,5],[599,99,1,99,8],[600,101,1,101,11],[601,103,1,103,3],[602,106,1,106,4],[603,109,1,109,6],[604,112,1,112,4]];
+// WAJH = [[page, startSurah, startAyah, endSurah, endAyah], ...]
+// page goes 1..604
+
+const SURAHS=[
+  {id:1,n:"الفاتحة",a:7},{id:2,n:"البقرة",a:286},{id:3,n:"آل عمران",a:200},{id:4,n:"النساء",a:176},{id:5,n:"المائدة",a:120},
+  {id:6,n:"الأنعام",a:165},{id:7,n:"الأعراف",a:206},{id:8,n:"الأنفال",a:75},{id:9,n:"التوبة",a:129},{id:10,n:"يونس",a:109},
+  {id:11,n:"هود",a:123},{id:12,n:"يوسف",a:111},{id:13,n:"الرعد",a:43},{id:14,n:"إبراهيم",a:52},{id:15,n:"الحجر",a:99},
+  {id:16,n:"النحل",a:128},{id:17,n:"الإسراء",a:111},{id:18,n:"الكهف",a:110},{id:19,n:"مريم",a:98},{id:20,n:"طه",a:135},
+  {id:21,n:"الأنبياء",a:112},{id:22,n:"الحج",a:78},{id:23,n:"المؤمنون",a:118},{id:24,n:"النور",a:64},{id:25,n:"الفرقان",a:77},
+  {id:26,n:"الشعراء",a:227},{id:27,n:"النمل",a:93},{id:28,n:"القصص",a:88},{id:29,n:"العنكبوت",a:69},{id:30,n:"الروم",a:60},
+  {id:31,n:"لقمان",a:34},{id:32,n:"السجدة",a:30},{id:33,n:"الأحزاب",a:73},{id:34,n:"سبأ",a:54},{id:35,n:"فاطر",a:45},
+  {id:36,n:"يس",a:83},{id:37,n:"الصافات",a:182},{id:38,n:"ص",a:88},{id:39,n:"الزمر",a:75},{id:40,n:"غافر",a:85},
+  {id:41,n:"فصلت",a:54},{id:42,n:"الشورى",a:53},{id:43,n:"الزخرف",a:89},{id:44,n:"الدخان",a:59},{id:45,n:"الجاثية",a:37},
+  {id:46,n:"الأحقاف",a:35},{id:47,n:"محمد",a:38},{id:48,n:"الفتح",a:29},{id:49,n:"الحجرات",a:18},{id:50,n:"ق",a:45},
+  {id:51,n:"الذاريات",a:60},{id:52,n:"الطور",a:49},{id:53,n:"النجم",a:62},{id:54,n:"القمر",a:55},{id:55,n:"الرحمن",a:78},
+  {id:56,n:"الواقعة",a:96},{id:57,n:"الحديد",a:29},{id:58,n:"المجادلة",a:22},{id:59,n:"الحشر",a:24},{id:60,n:"الممتحنة",a:13},
+  {id:61,n:"الصف",a:14},{id:62,n:"الجمعة",a:11},{id:63,n:"المنافقون",a:11},{id:64,n:"التغابن",a:18},{id:65,n:"الطلاق",a:12},
+  {id:66,n:"التحريم",a:12},{id:67,n:"الملك",a:30},{id:68,n:"القلم",a:52},{id:69,n:"الحاقة",a:52},{id:70,n:"المعارج",a:44},
+  {id:71,n:"نوح",a:28},{id:72,n:"الجن",a:28},{id:73,n:"المزمل",a:20},{id:74,n:"المدثر",a:56},{id:75,n:"القيامة",a:40},
+  {id:76,n:"الإنسان",a:31},{id:77,n:"المرسلات",a:50},{id:78,n:"النبأ",a:40},{id:79,n:"النازعات",a:46},{id:80,n:"عبس",a:42},
+  {id:81,n:"التكوير",a:29},{id:82,n:"الانفطار",a:19},{id:83,n:"المطففين",a:36},{id:84,n:"الانشقاق",a:25},{id:85,n:"البروج",a:22},
+  {id:86,n:"الطارق",a:17},{id:87,n:"الأعلى",a:19},{id:88,n:"الغاشية",a:26},{id:89,n:"الفجر",a:30},{id:90,n:"البلد",a:20},
+  {id:91,n:"الشمس",a:15},{id:92,n:"الليل",a:21},{id:93,n:"الضحى",a:11},{id:94,n:"الشرح",a:8},{id:95,n:"التين",a:8},
+  {id:96,n:"العلق",a:19},{id:97,n:"القدر",a:5},{id:98,n:"البينة",a:8},{id:99,n:"الزلزلة",a:8},{id:100,n:"العاديات",a:11},
+  {id:101,n:"القارعة",a:11},{id:102,n:"التكاثر",a:8},{id:103,n:"العصر",a:3},{id:104,n:"الهمزة",a:9},{id:105,n:"الفيل",a:5},
+  {id:106,n:"قريش",a:4},{id:107,n:"الماعون",a:7},{id:108,n:"الكوثر",a:3},{id:109,n:"الكافرون",a:6},{id:110,n:"النصر",a:3},
+  {id:111,n:"المسد",a:5},{id:112,n:"الإخلاص",a:4},{id:113,n:"الفلق",a:5},{id:114,n:"الناس",a:6}
+];
+
+function sname(id){return (SURAHS.find(x=>x.id===id)||{n:'?'}).n;}
+
+// wajh helpers
+function wajhLabel(pageNum){
+  const w=WAJH[pageNum-1];
+  if(!w) return 'وجه '+pageNum;
+  const ss=sname(w[1]),es=sname(w[3]);
+  if(w[1]===w[3]) return `الوجه ${pageNum} — ${ss} (${w[2]}-${w[4]})`;
+  return `الوجه ${pageNum} — ${ss} ${w[2]} إلى ${es} ${w[4]}`;
+}
+function wajhShort(pageNum){
+  const w=WAJH[pageNum-1];
+  if(!w) return 'وجه '+pageNum;
+  const ss=sname(w[1]),es=sname(w[3]);
+  if(w[1]===w[3]) return `${ss} آية ${w[2]}–${w[4]}`;
+  return `${ss} ${w[2]} — ${es} ${w[4]}`;
+}
+
+// ===================== STATE =====================
+let prog=JSON.parse(localStorage.getItem('qpro2')||'{}');
+let streak=parseInt(localStorage.getItem('qstreak')||'0');
+let lastDate=localStorage.getItem('qlastdate')||''
+let dlog=JSON.parse(localStorage.getItem('qdlog')||'{}');
+let hCur=parseInt(localStorage.getItem('qhcur')||'0');// 0=not set
+let rCur=parseInt(localStorage.getItem('qrcur')||'0');
+let cFilt='all'
+let editS=null
+let ST=JSON.parse(localStorage.getItem('qst')||JSON.stringify({hW:1,hPage:0,rW:2,rPage:0}));
+const TODAY=new Date().toISOString().split('T')[0];
+
+function init(){
+  buildSelects();
+  loadSUI();
+  updateStreak();
+  renderDate();
+  renderToday();
+  renderSurahs();
+  renderStats();
+  renderDots();
+  renderSum();
+  document.getElementById('qNote').value=localStorage.getItem('qnote')||''
+  const dp=new URLSearchParams(window.location.search).get('d');
+  if(dp) loadEnc(dp);
+}
+
+function buildSelects(){
+  const opts=WAJH.map((w,i)=>{
+    const p=i+1;
+    const ss=sname(w[1]),es=sname(w[3]);
+    const lbl=w[1]===w[3]?`وجه ${p} — ${ss} (آية ${w[2]}–${w[4]})`:`وجه ${p} — ${ss} ${w[2]} إلى ${es} ${w[4]}`;
+    return `<option value="${p}">${lbl}</option>`;
+  }).join('');
+  document.getElementById('sHPage').innerHTML=opts;
+  document.getElementById('sRPage').innerHTML=opts;
+  document.getElementById('sHPage').addEventListener('change',()=>showPageInfo('sHPage','sHPageInfo',false));
+  document.getElementById('sRPage').addEventListener('change',()=>showPageInfo('sRPage','sRPageInfo',true));
+}
+
+function showPageInfo(selId,infoId,isRev){
+  const p=parseInt(document.getElementById(selId).value);
+  const w=WAJH[p-1];if(!w)return;
+  const ss=sname(w[1]),es=sname(w[3]);
+  const txt=w[1]===w[3]?`سورة ${ss}، من آية ${w[2]} إلى آية ${w[4]}`:`من سورة ${ss} آية ${w[2]} — إلى سورة ${es} آية ${w[4]}`;
+  document.getElementById(infoId).textContent='📌 '+txt;
+}
+
+function loadSUI(){
+  if(ST.hPage) document.getElementById('sHPage').value=ST.hPage;
+  if(ST.rPage) document.getElementById('sRPage').value=ST.rPage;
+  document.getElementById('sHW').value=ST.hW||1;
+  document.getElementById('sRW').value=ST.rW||2;
+  if(ST.hPage) showPageInfo('sHPage','sHPageInfo',false);
+  if(ST.rPage) showPageInfo('sRPage','sRPageInfo',true);
+}
+
+// ===================== DATE =====================
+function renderDate(){
+  const d=new Date();
+  const days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  document.getElementById('dayDate').textContent=`${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  try{document.getElementById('dayHijri').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-islamic',{day:'numeric',month:'long',year:'numeric'}).format(d);}catch(e){}
+}
+
+// ===================== STREAK =====================
+function updateStreak(){
+  if(lastDate===TODAY)return;
+  const yd=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  if(lastDate===yd)streak++;else if(lastDate&&lastDate!==TODAY)streak=0;
+  lastDate=TODAY;saveSt();
+}
+function saveSt(){localStorage.setItem('qstreak',streak);localStorage.setItem('qlastdate',TODAY);}
+function markToday(){
+  if(localStorage.getItem('qlastdate')!==TODAY){streak=Math.max(1,streak);lastDate=TODAY;saveSt();}
+  localStorage.setItem('qday_'+TODAY,'1');renderDots();
+}
+function renderDots(){
+  const days=['أح','اث','ث','أر','خ','ج','س'];
+  const c=document.getElementById('wdots');const t=new Date();c.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(t);d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    const done=localStorage.getItem('qday_'+ds)==='1';
+    const isT=i===0;
+    const el=document.createElement('div');
+    el.className='wd'+(done?' done':'')+( isT?' today':'');
+    el.textContent=days[d.getDay()];c.appendChild(el);
+  }
+  document.getElementById('streakN').textContent=streak;
+  const ss=document.getElementById('stS');if(ss)ss.textContent=streak;
+}
+
+// ===================== RENDER TODAY =====================
+function renderToday(){
+  const log=dlog[TODAY]||{};
+
+  // compute plans if not set
+  if(!log.hPlan && hCur>0){
+    log.hPlan=computePlan(hCur, ST.hW||1);
+  }
+  if(!log.rPlan && rCur>0){
+    log.rPlan=computePlan(rCur, ST.rW||2);
+  }
+  dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+
+  // HAF
+  const hBtn=document.getElementById('hBtn');
+  const hCard=document.getElementById('hCard');
+  const hSub=document.getElementById('hSub');
+
+  if(!hCur){
+    hSub.textContent='اضبط الإعدادات أولاً';
+    hCard.innerHTML=`<div style="text-align:center;padding:10px 0"><div style="font-size:1.3rem;margin-bottom:6px">⚙️</div><div style="font-size:.82rem;color:var(--gd);font-weight:700">أول مرة؟</div><div style="font-size:.74rem;color:var(--tm);margin-top:4px">اذهب لتبويب <b>الإعدادات</b> وحدد الوجه الذي ستبدأ منه</div></div>`;
+    hBtn.style.display='none';
+  } else if(log.hPlan){
+    const pl=log.hPlan;
+    hSub.textContent=pl.pages.length>1?`الأوجه ${pl.pages[0]}–${pl.pages[pl.pages.length-1]}`:`الوجه ${pl.pages[0]}`;
+    hCard.innerHTML=renderPlanCard(pl,false,log.hDone);
+    hBtn.style.display='';
+    if(log.hDone){hBtn.className='cbtn cbtn-h done';hBtn.textContent='✓ تم — اضغط للإلغاء';}
+    else{hBtn.className='cbtn cbtn-h';hBtn.textContent='✓ أنهيت حفظ اليوم';}
+  }
+
+  // REV
+  const rBtn=document.getElementById('rBtn');
+  const rCard=document.getElementById('rCard');
+  const rSub=document.getElementById('rSub');
+
+  if(!rCur){
+    rSub.textContent='اضبط الإعدادات أولاً';
+    rCard.innerHTML='';rBtn.style.display='none';
+  } else if(log.rPlan){
+    const pl=log.rPlan;
+    rSub.textContent=pl.pages.length>1?`الأوجه ${pl.pages[0]}–${pl.pages[pl.pages.length-1]}`:`الوجه ${pl.pages[0]}`;
+    rCard.innerHTML=renderPlanCard(pl,true,log.rDone);
+    rBtn.style.display='';
+    if(log.rDone){rBtn.className='cbtn cbtn-r done';rBtn.textContent='✓ تم — اضغط للإلغاء';}
+    else{rBtn.className='cbtn cbtn-r';rBtn.textContent='✓ أنهيت المراجعة';}
+  }
+}
+
+function computePlan(startPage, numWajh){
+  const pages=[];
+  for(let i=0;i<numWajh;i++){
+    const p=((startPage-1+i)%604)+1;
+    pages.push(p);
+  }
+  return {pages};
+}
+
+function renderPlanCard(plan, isRev, done){
+  const col=isRev?'var(--blue)':'var(--green)';
+  let html='';
+  plan.pages.forEach(p=>{
+    const w=WAJH[p-1];if(!w)return;
+    const ss=sname(w[1]),es=sname(w[3]);
+    const desc=w[1]===w[3]?`${ss} — آية ${w[2]} إلى ${w[4]}`:`${ss} ${w[2]} — ${es} ${w[4]}`;
+    const pct=Math.round(((p-1)/604)*100);
+    html+=`<div style="margin-bottom:${plan.pages.length>1?'8px':'0'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+        <span style="font-family:'Amiri',serif;font-size:1rem;font-weight:700;color:var(--text)">الوجه ${p}</span>
+        <span style="font-size:.68rem;font-weight:700;color:${col}">ص ${p}/604</span>
+      </div>
+      <div style="font-size:.74rem;color:var(--tm);margin-bottom:5px">${desc}</div>
+      <div style="background:var(--gray-l);border-radius:100px;height:5px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${col};border-radius:100px"></div>
+      </div>
+    </div>`;
+  });
+  if(done){
+    html+=`<div style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;background:${isRev?'var(--bl)':'var(--gm)'};color:${isRev?'var(--blue)':'var(--gd)'};border:1.5px solid ${isRev?'var(--bb)':'var(--gb)'};border-radius:20px;padding:3px 10px;font-size:.7rem;font-weight:700">✓ ${isRev?'تمت المراجعة':'تم الحفظ'}</div>`;
+  }
+  return html;
+}
+
+// ===================== AUTO-UPDATE PROGRESS FROM WAJH =====================
+function updateProgressFromWajh(pages, isRev){
+  // For each wajh page, find the surah(s) it covers and update progress
+  pages.forEach(pg=>{
+    const w=WAJH[pg-1];
+    if(!w) return;
+    const startSid=w[1], startAyah=w[2], endSid=w[3], endAyah=w[4];
+
+    // Update all surahs touched by this wajh
+    const minSid=Math.min(startSid,endSid);
+    const maxSid=Math.max(startSid,endSid);
+
+    for(let sid=minSid;sid<=maxSid;sid++){
+      const s=SURAHS.find(x=>x.id===sid);
+      if(!s) continue;
+      const p=prog[sid]||{};
+
+      if(!isRev){
+        // Hafiz update
+        const from = sid===startSid ? startAyah : 1;
+        const to   = sid===endSid   ? endAyah   : s.a;
+
+        if(to>=s.a && from<=1){
+          // Full surah memorized
+          p.hafStatus='done';
+          p.hafFrom=null; p.hafTo=null;
+        } else {
+          // Partial - extend range if already started
+          const existFrom = p.hafFrom||from;
+          const existTo   = p.hafTo||0;
+          p.hafStatus='partial';
+          p.hafFrom=Math.min(existFrom, from);
+          p.hafTo=Math.max(existTo, to);
+          // If now covers all ayahs
+          if(p.hafFrom<=1 && p.hafTo>=s.a){
+            p.hafStatus='done'; p.hafFrom=null; p.hafTo=null;
+          }
+        }
+      } else {
+        // Review update
+        const from = sid===startSid ? startAyah : 1;
+        const to   = sid===endSid   ? endAyah   : s.a;
+
+        if(to>=s.a && from<=1){
+          p.revStatus='done';
+          p.revFrom=null; p.revTo=null;
+        } else {
+          p.revStatus='partial';
+          p.revFrom=Math.min(p.revFrom||from, from);
+          p.revTo=Math.max(p.revTo||0, to);
+          if((p.revFrom||99)<=1 && (p.revTo||0)>=s.a){
+            p.revStatus='done'; p.revFrom=null; p.revTo=null;
+          }
+        }
+        p.revDate=TODAY;
+      }
+      prog[sid]=p;
+    }
+  });
+  localStorage.setItem('qpro2',JSON.stringify(prog));
+}
+
+// ===================== COMPLETE =====================
+function doHaf(){
+  const log=dlog[TODAY]||{};
+  if(log.hDone){
+    log.hDone=false;
+    if(log.hPlan) hCur=log.hPlan.pages[0];
+    localStorage.setItem('qhcur',hCur);
+    dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+    renderToday();showT('تم إلغاء الحفظ');return;
+  }
+  log.hDone=true;
+  if(log.hPlan){
+    const pages=log.hPlan.pages;
+    const next=((pages[pages.length-1])%604)+1;
+    hCur=next;localStorage.setItem('qhcur',hCur);
+    // ← auto-update surah progress
+    updateProgressFromWajh(pages, false);
+  }
+  dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+  markToday();renderToday();renderStats();renderSum();
+  showT('✓ أحسنت! تم تسجيل الحفظ وتحديث السور');
+}
+
+function doRev(){
+  const log=dlog[TODAY]||{};
+  if(log.rDone){
+    log.rDone=false;
+    if(log.rPlan) rCur=log.rPlan.pages[0];
+    localStorage.setItem('qrcur',rCur);
+    dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+    renderToday();showT('تم إلغاء المراجعة');return;
+  }
+  log.rDone=true;
+  if(log.rPlan){
+    const pages=log.rPlan.pages;
+    const next=((pages[pages.length-1])%604)+1;
+    rCur=next;localStorage.setItem('qrcur',rCur);
+    // ← auto-update review progress
+    updateProgressFromWajh(pages, true);
+  }
+  dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+  markToday();renderToday();renderStats();renderSum();
+  showT('✓ ممتاز! تمت المراجعة وتحديث السور');
+}
+
+// ===================== SETTINGS =====================
+function saveS(){
+  const hPage=parseInt(document.getElementById('sHPage').value)||1;
+  const rPage=parseInt(document.getElementById('sRPage').value)||1;
+  ST={hW:parseInt(document.getElementById('sHW').value)||1,hPage,rW:parseInt(document.getElementById('sRW').value)||2,rPage};
+  localStorage.setItem('qst',JSON.stringify(ST));
+  hCur=hPage;rCur=rPage;
+  localStorage.setItem('qhcur',hCur);localStorage.setItem('qrcur',rCur);
+  const log=dlog[TODAY]||{};
+  log.hDone=false;log.rDone=false;log.hPlan=null;log.rPlan=null;
+  dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+  renderToday();showT('✓ تم الحفظ — الخطة محدّثة');
+}
+
+// ===================== SURAHS =====================
+function renderSurahs(){
+  const c=document.getElementById('sList');c.innerHTML='';
+  const fl=SURAHS.filter(s=>{
+    const p=prog[s.id]||{};const hs=p.hafStatus||'none',rs=p.revStatus||'none';
+    if(cFilt==='all')return true;if(cFilt==='hd')return hs==='done';
+    if(cFilt==='hp')return hs==='partial';if(cFilt==='rv')return rs==='needed'||rs==='partial';
+    if(cFilt==='nn')return hs==='none';return true;
+  });
+  if(!fl.length){c.innerHTML='<p style="text-align:center;color:var(--td);padding:22px;font-size:.85rem">لا توجد سور</p>';return;}
+  fl.forEach(s=>{
+    const p=prog[s.id]||{};const hs=p.hafStatus||'none',rs=p.revStatus||'none';
+    let hl='لم تُحفظ',hc='bhn',hpct=0;
+    if(hs==='done'){hl='✓ محفوظة';hc='bhd';hpct=100;}
+    else if(hs==='partial'){hpct=gHP(s,p);hl=`جزئي ${hpct}%`;hc='bhp';}
+    let rl='—',rc='brn',rpct=0;
+    if(rs==='needed'){rl='🔄 مراجعة';rc='brr';}
+    else if(rs==='partial'){rpct=gRP(s,p);rl=`🔄 ${rpct}%`;rc='brp';}
+    else if(rs==='done'){rl='✓ راجعت';rc='brd';}
+    const el=document.createElement('div');el.className='scard';
+    el.innerHTML=`<div class="sctop"><div class="snum">${s.id}</div><div style="flex:1"><div class="sname">${s.n}</div><div class="smeta">${s.a} آية</div></div><button class="abtn" onclick="openM(${s.id})">تحديث</button></div>
+    <div class="sbadges"><div class="bg"><div class="bgl">الحفظ</div><span class="badge ${hc}">${hl}</span>${hs==='partial'?`<div class="mbw"><div class="mbh" style="width:${hpct}%"></div></div>`:''}</div>
+    <div class="bg"><div class="bgl">المراجعة</div><span class="badge ${rc}">${rl}</span>${rs==='partial'?`<div class="mbw"><div class="mbr" style="width:${rpct}%"></div></div>`:''}</div></div>`;
+    c.appendChild(el);
+  });
+}
+function gHP(s,p){if(!p.hafFrom||!p.hafTo)return 0;return Math.min(100,Math.round(Math.max(0,parseInt(p.hafTo)-parseInt(p.hafFrom)+1)/s.a*100));}
+function gRP(s,p){if(!p.revFrom||!p.revTo)return 0;return Math.min(100,Math.round(Math.max(0,parseInt(p.revTo)-parseInt(p.revFrom)+1)/s.a*100));}
+function FS(f,btn){cFilt=f;document.querySelectorAll('.ft').forEach(t=>t.classList.remove('on'));btn.classList.add('on');renderSurahs();}
+
+// ===================== STATS =====================
+function renderStats(){
+  let m=0,r=0,par=0;
+  SURAHS.forEach(s=>{const p=prog[s.id]||{};const h=p.hafStatus||'none',rv=p.revStatus||'none';
+    if(h==='done')m++;if(h==='partial')par++;if(rv==='needed'||rv==='partial')r++;});
+  const pct=Math.round(m/114*100);
+  document.getElementById('stM').textContent=m;document.getElementById('stR').textContent=r;document.getElementById('stP').textContent=par;
+  document.getElementById('gbar').style.width=pct+'%';document.getElementById('pLbl').textContent=pct+'%';document.getElementById('pSur').textContent=`${m}/114`;
+}
+function renderSum(){
+  const c=document.getElementById('sumBody');let hd=0,hp=0,hn=0,rn=0,rp=0,rd=0;
+  SURAHS.forEach(s=>{const p=prog[s.id]||{};const h=p.hafStatus||'none',r=p.revStatus||'none';
+    if(h==='done')hd++;else if(h==='partial')hp++;else hn++;
+    if(r==='needed')rn++;else if(r==='partial')rp++;else if(r==='done')rd++;});
+  if(!hd&&!hp){c.innerHTML='<p style="font-size:.76rem;color:var(--td);text-align:center">سجّل تقدمك أولاً</p>';return;}
+  c.innerHTML=`<div style="font-size:.77rem">
+    <div style="font-weight:800;color:var(--gd);margin-bottom:5px">📗 الحفظ</div>
+    <div class="sumr"><span style="color:var(--tm)">محفوظة كاملة</span><b style="color:var(--green)">${hd} سورة</b></div>
+    <div class="sumr"><span style="color:var(--tm)">حفظ جزئي</span><b style="color:var(--yellow)">${hp} سورة</b></div>
+    <div class="sumr"><span style="color:var(--tm)">لم تُحفظ</span><b style="color:var(--td)">${hn} سورة</b></div>
+    <div style="font-weight:800;color:var(--blue);margin:8px 0 5px">🔄 المراجعة</div>
+    <div class="sumr"><span style="color:var(--tm)">تحتاج مراجعة</span><b style="color:var(--orange)">${rn}</b></div>
+    <div class="sumr"><span style="color:var(--tm)">مراجعة جزئية</span><b style="color:var(--blue)">${rp}</b></div>
+    <div class="sumr"><span style="color:var(--tm)">راجعتها</span><b style="color:var(--green)">${rd}</b></div>
+  </div>`;
+}
+
+// ===================== TABS =====================
+function SW(n,btn){
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tp').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');document.getElementById('tp-'+n).classList.add('on');
+  if(n==='surahs')renderSurahs();
+  if(n==='stats'){renderStats();renderSum();renderDots();}
+  if(n==='settings')loadSUI();
+}
+
+// ===================== MODAL =====================
+function openM(id){
+  editS=id;const s=SURAHS.find(x=>x.id===id);const p=prog[id]||{};
+  document.getElementById('mTitle').textContent='سورة '+s.n+' — '+s.a+' آية';
+  document.getElementById('mHS').value=p.hafStatus||'none';
+  document.getElementById('mHQ').value=p.hafQuality||'3';
+  document.getElementById('mHN').value=p.hafNote||'';
+  document.getElementById('mHF').value=p.hafFrom||1;document.getElementById('mHF').max=s.a;
+  document.getElementById('mHT').value=p.hafTo||s.a;document.getElementById('mHT').max=s.a;
+  document.getElementById('mRS').value=p.revStatus||'none';
+  document.getElementById('mRF').value=p.revFrom||1;document.getElementById('mRF').max=s.a;
+  document.getElementById('mRT').value=p.revTo||s.a;document.getElementById('mRT').max=s.a;
+  document.getElementById('mRD').value=p.revDate||TODAY;
+  document.getElementById('mRN').value=p.revNote||'';
+  mHC();mRC();uMH();uMR();
+  document.getElementById('mOverlay').classList.add('on');document.body.style.overflow='hidden';
+}
+function mHC(){document.getElementById('mHP').style.display=document.getElementById('mHS').value==='partial'?'block':'none';}
+function mRC(){document.getElementById('mRP').style.display=document.getElementById('mRS').value==='partial'?'block':'none';}
+function uMH(){if(!editS)return;const s=SURAHS.find(x=>x.id===editS);const f=parseInt(document.getElementById('mHF').value)||1;const t=parseInt(document.getElementById('mHT').value)||1;const c=Math.max(0,t-f+1);const pct=Math.min(100,Math.round(c/s.a*100));document.getElementById('mHPct').textContent=pct+'%';document.getElementById('mHCt').textContent=c+' آية';document.getElementById('mHFl').style.width=pct+'%';}
+function uMR(){if(!editS)return;const s=SURAHS.find(x=>x.id===editS);const f=parseInt(document.getElementById('mRF').value)||1;const t=parseInt(document.getElementById('mRT').value)||1;const c=Math.max(0,t-f+1);const pct=Math.min(100,Math.round(c/s.a*100));document.getElementById('mRPct').textContent=pct+'%';document.getElementById('mRCt').textContent=c+' آية';document.getElementById('mRFl').style.width=pct+'%';}
+function closeM(){document.getElementById('mOverlay').classList.remove('on');document.body.style.overflow='';editS=null;}
+function saveM(){
+  if(!editS)return;const sid=editS;
+  const hs=document.getElementById('mHS').value;const rs=document.getElementById('mRS').value;
+  prog[sid]={hafStatus:hs,hafFrom:hs==='partial'?parseInt(document.getElementById('mHF').value):null,hafTo:hs==='partial'?parseInt(document.getElementById('mHT').value):null,hafQuality:document.getElementById('mHQ').value,hafNote:document.getElementById('mHN').value,revStatus:rs,revFrom:rs==='partial'?parseInt(document.getElementById('mRF').value):null,revTo:rs==='partial'?parseInt(document.getElementById('mRT').value):null,revDate:document.getElementById('mRD').value,revNote:document.getElementById('mRN').value};
+  localStorage.setItem('qpro2',JSON.stringify(prog));
+  closeM();renderSurahs();renderStats();renderSum();
+  showT('✓ تم تحديث سورة '+(SURAHS.find(x=>x.id===sid)?.n||'')+'');markToday();
+}
+document.getElementById('mOverlay').addEventListener('click',function(e){if(e.target===this)closeM();})
+
+// ===================== NOTE =====================
+function saveNote(){localStorage.setItem('qnote',document.getElementById('qNote').value);showT('✓ تم حفظ الملاحظة');}
+
+// ===================== TOAST =====================
+function showT(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
+
+// ===================== SYNC =====================
+function copyL(){
+  const all={prog,streak,lastDate,ST,dlog,hCur,rCur,note:localStorage.getItem('qnote')||''};
+  const enc=btoa(encodeURIComponent(JSON.stringify(all)));
+  const url=window.location.href.split('?')[0]+'?d='+enc;
+  navigator.clipboard.writeText(url).then(()=>showT('✓ تم نسخ الرابط')).catch(()=>prompt('انسخ الرابط:',url));
+}
+function importL(){
+  const dp=new URLSearchParams(window.location.search).get('d');
+  if(dp){loadEnc(dp);return;}
+  const url=prompt('الصق الرابط:');if(!url)return;
+  try{const u=new URL(url);const d=new URLSearchParams(u.search).get('d');if(d)loadEnc(d);else showT('⚠️ رابط بلا بيانات');}
+  catch{showT('⚠️ رابط غير صحيح');}
+}
+function loadEnc(enc){
+  try{
+    const d=JSON.parse(decodeURIComponent(atob(enc)));
+    if(d.prog){prog=d.prog;localStorage.setItem('qpro2',JSON.stringify(prog));}
+    if(d.streak!==undefined){streak=d.streak;localStorage.setItem('qstreak',streak);}
+    if(d.lastDate){lastDate=d.lastDate;localStorage.setItem('qlastdate',lastDate);}
+    if(d.ST){ST=d.ST;localStorage.setItem('qst',JSON.stringify(ST));}
+    if(d.dlog){dlog=d.dlog;localStorage.setItem('qdlog',JSON.stringify(dlog));}
+    if(d.hCur){hCur=d.hCur;localStorage.setItem('qhcur',hCur);}
+    if(d.rCur){rCur=d.rCur;localStorage.setItem('qrcur',rCur);}
+    if(d.note)localStorage.setItem('qnote',d.note);
+    loadSUI();renderToday();renderSurahs();renderStats();renderSum();renderDots();
+    showT('✅ تم استيراد البيانات!');window.history.replaceState({},'',window.location.pathname);
+  }catch{showT('⚠️ خطأ في البيانات');}
+}
+
+init();
+</script>
+</body>
+</html>
