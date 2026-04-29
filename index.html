@@ -5,6 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>متابعة حفظ القرآن</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDE31hojSVI1yBqe-rIt4dPXtxciimcAGI",
+  authDomain: "quran-tracker-7a170.firebaseapp.com",
+  projectId: "quran-tracker-7a170",
+  storageBucket: "quran-tracker-7a170.firebasestorage.app",
+  messagingSenderId: "590612509740",
+  appId: "1:590612509740:web:64d1b8bfc1dc20beb40d89"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+let unsubSnapshot = null;
+
+// Expose to global scope
+window._fbAuth = auth;
+window._fbDb = db;
+window._fbDoc = doc;
+window._fbSetDoc = setDoc;
+window._fbGetDoc = getDoc;
+window._fbOnSnapshot = onSnapshot;
+window._fbGoogleProvider = new GoogleAuthProvider();
+window._fbSignInWithPopup = signInWithPopup;
+window._fbSignOut = signOut;
+window._fbOnAuthStateChanged = onAuthStateChanged;
+window._fbUnsubSnapshot = () => { if(unsubSnapshot) unsubSnapshot(); };
+window._fbSetUnsubSnapshot = (fn) => { unsubSnapshot = fn; };
+
+onAuthStateChanged(auth, (user) => {
+  if(typeof window.onFirebaseAuthChange === 'function')
+    window.onFirebaseAuthChange(user);
+});
+</script>
 <style>
 :root{
   --green:#2E8B57;--gl:#E8F5EE;--gm:#C5E8D4;--gb:#A8D5B8;--gd:#1A6640;
@@ -13,9 +51,22 @@
   --gray:#6B7280;--gray-l:#F3F4F6;--gray-b:#E5E7EB;
   --white:#FFF;--text:#1F2937;--tm:#4B5563;--td:#9CA3AF;
   --sh:0 2px 12px rgba(0,0,0,.07);--shm:0 6px 24px rgba(0,0,0,.12);
+  --bg:#EEF7F2;--card:#FFF;
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Tajawal',sans-serif;background:#EEF7F2;color:var(--text);min-height:100vh;direction:rtl;overflow-x:hidden;}
+body.dark{
+  --gl:#1A2E22;--gm:#1E3828;--gb:#2A5038;--gd:#5CB87A;
+  --yl:#2A2410;--ym:#2E2800;--yb:#4A3E00;
+  --bl:#0D1A2E;--bb:#1A3060;
+  --gray-l:#1E2430;--gray-b:#2A3040;
+  --white:#1A2030;--text:#E8EDF5;--tm:#9AAABB;--td:#5A6A7A;
+  --bg:#0D1117;--card:#161C28;
+}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;overflow-x:hidden;transition:background 0.3s,color 0.3s;}
+.card{background:var(--card)!important;}
+.tabs{background:var(--card)!important;}
+.modal{background:var(--card)!important;}
+.fsel,.finp,.form-select,.form-input,.slsel,.slinput,.setting-input{background:var(--white)!important;color:var(--text)!important;border-color:var(--gray-b)!important;}
+textarea{background:var(--white)!important;color:var(--text)!important;}
 .wrap{max-width:680px;margin:0 auto;padding:0 14px 40px;}
 
 /* TABS */
@@ -176,21 +227,53 @@ body{font-family:'Tajawal',sans-serif;background:#EEF7F2;color:var(--text);min-h
 
 .sumr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray-b);font-size:.77rem;}
 .sumr:last-child{border-bottom:none;}
+.star-btn{background:none;border:none;font-size:2rem;cursor:pointer;opacity:.3;transition:all 0.15s;padding:4px;}
+.star-btn.active{opacity:1;transform:scale(1.15);}
 </style>
 </head>
 <body>
-<div class="wrap">
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:30px">
+  <div style="text-align:center;max-width:340px;width:100%">
+    <div style="font-family:'Amiri',serif;font-size:2rem;color:var(--gd);margin-bottom:8px">خطة زياد بن محمد البابطين</div>
+    <div style="font-size:.82rem;color:var(--td);margin-bottom:40px">متابعة حفظ القرآن الكريم</div>
+    <div style="background:var(--card);border:1.5px solid var(--gb);border-radius:18px;padding:28px 24px;box-shadow:var(--sh)">
+      <div style="font-size:2rem;margin-bottom:12px">📖</div>
+      <div style="font-family:'Amiri',serif;font-size:1.2rem;color:var(--gd);margin-bottom:6px">مرحباً بك</div>
+      <div style="font-size:.78rem;color:var(--td);margin-bottom:24px">سجّل دخولك لحفظ بياناتك ومزامنتها على جميع أجهزتك</div>
+      <button onclick="signInGoogle()" style="width:100%;background:#fff;border:1.5px solid var(--gray-b);border-radius:11px;padding:13px 16px;font-family:'Tajawal',sans-serif;font-size:.92rem;font-weight:700;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 1px 6px rgba(0,0,0,.08)">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
+        تسجيل الدخول بـ Google
+      </button>
+      <div id="loginError" style="font-size:.75rem;color:#D43F3F;margin-top:10px;display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- USER BAR -->
+<div id="userBar" style="display:none;background:var(--gl);border-bottom:1.5px solid var(--gb);padding:8px 14px;display:none;align-items:center;gap:10px;max-width:680px;margin:0 auto">
+  <img id="userAvatar" src="" width="28" height="28" style="border-radius:50%;display:none">
+  <span id="userName" style="font-size:.78rem;font-weight:700;color:var(--gd);flex:1"></span>
+  <span id="syncStatus" style="font-size:.68rem;color:var(--td)">🔄 جارٍ المزامنة...</span>
+  <button onclick="doSignOut()" style="background:none;border:1px solid var(--gb);border-radius:7px;padding:4px 10px;font-family:'Tajawal',sans-serif;font-size:.7rem;color:var(--tm);cursor:pointer">خروج</button>
+</div>
+
+<div id="viewerScreen" style="display:none;background:#EEF7F2;min-height:100vh"></div>
+
+<div class="wrap" style="display:none">
 <nav class="tabs">
   <button class="tb on" onclick="SW('today',this)">📅 اليوم</button>
   <button class="tb" onclick="SW('surahs',this)">📖 السور</button>
   <button class="tb" onclick="SW('stats',this)">📊 إحصائيات</button>
+  <button class="tb" onclick="SW('week',this)">🗓️ الأسبوع</button>
   <button class="tb" onclick="SW('settings',this)">⚙️ إعدادات</button>
+  <button onclick="toggleDark()" style="background:none;border:none;cursor:pointer;padding:12px 10px;font-size:1rem;" id="darkBtn">🌙</button>
 </nav>
 
 <!-- TODAY -->
 <div class="tp on" id="tp-today">
   <div class="dh">
-    <div class="dbism">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+    <div class="dbism">خطة زياد بن محمد البابطين</div>
     <div class="ddate" id="dayDate"></div>
     <div class="dhijri" id="dayHijri"></div>
   </div>
@@ -204,13 +287,40 @@ body{font-family:'Tajawal',sans-serif;background:#EEF7F2;color:var(--text);min-h
     <button class="cbtn cbtn-h" id="hBtn" onclick="doHaf()">✓ أنهيت حفظ اليوم</button>
   </div>
 
+  <!-- التكرار -->
+  <div class="pbox" style="background:var(--yl);border:1.5px solid var(--yb);margin-top:-4px;border-radius:0 0 14px 14px;padding:12px 14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:1rem">🔁</span>
+      <div>
+        <div style="font-weight:800;font-size:.85rem;color:var(--yellow)">تكرار الحفظ</div>
+        <div style="font-size:.68rem;color:var(--td)">سجّل عدد مرات التكرار في الملاحظات</div>
+      </div>
+    </div>
+    <div class="tc" style="background:white;border:1px solid var(--yb);border-radius:9px;padding:9px 12px;margin-bottom:8px;font-size:.78rem;color:var(--tm)" id="repCard">
+      أنهِ حفظ اليوم أولاً لتفعيل التكرار
+    </div>
+    <button class="cbtn" id="repBtn" onclick="doRep()" style="background:var(--yellow);color:white;display:none">🔁 أنهيت التكرار</button>
+  </div>
+
+  <!-- التثبيت -->
+  <div class="pbox" style="background:#F0F4FF;border:1.5px solid #C0CCFF;margin-top:12px;border-radius:14px;padding:14px" id="tathbeetBox">
+    <div class="pbh">
+      <div class="pic" style="background:#D0D8FF">🧠</div>
+      <div><div class="ptitle" style="color:#2040A0">تثبيت اليوم</div><div class="psub" id="tSub">—</div></div>
+    </div>
+    <div class="tc" style="background:white;border:1px solid #C0CCFF;border-radius:9px;padding:10px 12px;margin-bottom:8px" id="tCard">
+      <div style="color:var(--td);font-size:.78rem;text-align:center">لا يوجد تثبيت — ابدأ من اليوم الثاني</div>
+    </div>
+    <button class="cbtn" id="tBtn" onclick="doTathbeet()" style="background:#3050C0;color:white;display:none">🧠 أنهيت التثبيت</button>
+  </div>
+
   <div class="pbox prev">
     <div class="pbh">
       <div class="pic pic-r">🔄</div>
       <div><div class="ptitle ptitle-r">مراجعة اليوم</div><div class="psub" id="rSub">—</div></div>
     </div>
     <div class="tc tc-r" id="rCard"></div>
-    <button class="cbtn cbtn-r" id="rBtn" onclick="doRev()">✓ أنهيت المراجعة</button>
+    <button class="cbtn cbtn-r" id="rBtn" onclick="doRev()">✓ تم</button>
   </div>
 
   <div class="card">
@@ -218,6 +328,31 @@ body{font-family:'Tajawal',sans-serif;background:#EEF7F2;color:var(--text);min-h
     <div class="cb">
       <div class="sdisp"><div class="scnt" id="streakN">0</div><div class="slbl">يوم متتالي</div></div>
       <div class="wdots" id="wdots"></div>
+    </div>
+  </div>
+
+  <!-- WEEKLY STATS -->
+  <div class="card">
+    <div class="ch">📊 إحصائية الأسبوع</div>
+    <div class="cb" id="weekStats"></div>
+  </div>
+
+  <!-- MONTHLY CALENDAR -->
+  <div class="card">
+    <div class="ch">
+      <span>📅 التقويم الشهري</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="prevMonth()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gd);padding:0 4px">‹</button>
+        <span id="calMonthLabel" style="font-size:.82rem;font-weight:700;color:var(--gd)"></span>
+        <button onclick="nextMonth()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gd);padding:0 4px">›</button>
+      </div>
+    </div>
+    <div class="cb" id="calGrid"></div>
+    <div style="display:flex;gap:12px;padding:8px 14px;font-size:.68rem;color:var(--tm);border-top:1px solid var(--gray-b);flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:3px;background:var(--green);display:inline-block"></span>أكملت الاثنين</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:3px;background:#FFE0C0;display:inline-block"></span>أكملت واحدة</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:3px;background:var(--gray-b);display:inline-block"></span>لم يُكمل</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:3px;background:var(--ym);display:inline-block"></span>يوم راحة</span>
     </div>
   </div>
 </div>
@@ -269,7 +404,23 @@ body{font-family:'Tajawal',sans-serif;background:#EEF7F2;color:var(--text);min-h
     <div class="syncbtns">
       <button class="syncbtn syncc" onclick="copyL()">📋 نسخ رابط البيانات</button>
       <button class="syncbtn synci" onclick="importL()">📥 استيراد من رابط</button>
+      <button class="syncbtn" onclick="copyViewL()" style="background:#6030C0;color:white;grid-column:1/-1">👁️ نسخ رابط المتابعة (للآخرين)</button>
     </div>
+  </div>
+</div>
+
+<!-- WEEKLY PLAN -->
+<div class="tp" id="tp-week">
+  <div class="card">
+    <div class="ch">
+      <span>🗓️ خطة الأسبوع</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="prevWeek()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gd);padding:0 4px">‹</button>
+        <span id="weekLabel" style="font-size:.8rem;font-weight:700;color:var(--gd)"></span>
+        <button onclick="nextWeek()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gd);padding:0 4px">›</button>
+      </div>
+    </div>
+    <div class="cb" id="weekPlanGrid"></div>
   </div>
 </div>
 
@@ -306,6 +457,43 @@ body{font-family:'Tajawal',sans-serif;background:#EEF7F2;color:var(--text);min-h
       <button class="savebtn" onclick="saveS()">💾 حفظ الإعدادات وتحديث الخطة</button>
     </div>
   </div>
+
+  <!-- REST DAY -->
+  <div class="card">
+    <div class="ch">😴 يوم الراحة الأسبوعي</div>
+    <div class="cb">
+      <div class="slrow">
+        <div><div class="sllbl">يوم الراحة</div><div class="slsub">لا يُحتسب كيوم فائت ولا يتراكم عليك</div></div>
+        <select class="slinput" id="restDay" style="width:100px" onchange="saveRestDay()">
+          <option value="-1">بدون</option>
+          <option value="0">الأحد</option>
+          <option value="1">الاثنين</option>
+          <option value="2">الثلاثاء</option>
+          <option value="3">الأربعاء</option>
+          <option value="4">الخميس</option>
+          <option value="5">الجمعة</option>
+          <option value="6">السبت</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS CARD -->
+  <div class="card">
+    <div class="ch">🔔 إشعارات التذكير اليومي</div>
+    <div class="cb">
+      <div class="slrow">
+        <div><div class="sllbl">تفعيل الإشعارات</div><div class="slsub">يذكّرك يومياً بحفظك ومراجعتك</div></div>
+        <button id="notifBtn" onclick="requestNotif()" style="background:var(--green);color:white;border:none;border-radius:9px;padding:8px 14px;font-family:'Tajawal',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;">تفعيل</button>
+      </div>
+      <div class="slrow">
+        <div><div class="sllbl">وقت التذكير</div><div class="slsub">الوقت اليومي للإشعار</div></div>
+        <input type="time" class="slinput" id="notifTime" value="07:00" style="width:90px" onchange="saveNotifTime()">
+      </div>
+      <div id="notifStatus" style="font-size:.75rem;margin-top:6px;text-align:center;color:var(--td)"></div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="ch">📝 ملاحظات</div>
     <div class="cb">
@@ -314,6 +502,73 @@ body{font-family:'Tajawal',sans-serif;background:#EEF7F2;color:var(--text);min-h
     </div>
   </div>
 </div>
+</div>
+
+<!-- REVIEW RESULT POPUP -->
+<div class="mo" id="revResultOverlay">
+  <div class="modal" style="padding:24px 18px 34px">
+    <div class="mh"></div>
+    <div style="font-family:'Amiri',serif;font-size:1.2rem;color:var(--blue);margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--bb)">ماذا أنجزت في المراجعة؟</div>
+
+    <!-- Option 1: Full -->
+    <button onclick="revResult('full')" style="width:100%;background:var(--gl);border:1.5px solid var(--gb);border-radius:11px;padding:13px 16px;text-align:right;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;color:var(--gd);cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.3rem">✅</span>
+      <div><div>أنجزت المقدار كاملاً</div><div style="font-size:.72rem;font-weight:400;color:var(--tm);margin-top:2px">تم تسجيل المراجعة كاملة</div></div>
+    </button>
+
+    <!-- Option 2: Partial -->
+    <button onclick="revResult('partial')" style="width:100%;background:var(--yl);border:1.5px solid var(--yb);border-radius:11px;padding:13px 16px;text-align:right;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;color:var(--yellow);cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.3rem">📝</span>
+      <div><div>أنجزت بعض المقدار</div><div style="font-size:.72rem;font-weight:400;color:var(--tm);margin-top:2px">حدّد ما أنجزته والباقي يُسجَّل تفريط</div></div>
+    </button>
+
+    <!-- Option 3: None -->
+    <button onclick="revResult('none')" style="width:100%;background:#FFF0F0;border:1.5px solid #FFBBBB;border-radius:11px;padding:13px 16px;text-align:right;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:700;color:#C03030;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.3rem">❌</span>
+      <div><div>لم أنجز شيئاً</div><div style="font-size:.72rem;font-weight:400;color:var(--tm);margin-top:2px">يُسجَّل المقدار كله كتفريط</div></div>
+    </button>
+
+    <!-- Partial selector (hidden initially) -->
+    <div id="revPartialSel" style="display:none;background:var(--gray-l);border-radius:11px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:.78rem;font-weight:700;color:var(--text-mid);margin-bottom:8px">حدد الأوجه التي راجعتها:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <label style="font-size:.68rem;color:var(--td)">من وجه</label>
+          <input type="number" id="revPartFrom" class="slinput" style="width:100%;margin-top:3px" min="1">
+        </div>
+        <div>
+          <label style="font-size:.68rem;color:var(--td)">إلى وجه</label>
+          <input type="number" id="revPartTo" class="slinput" style="width:100%;margin-top:3px" min="1">
+        </div>
+      </div>
+      <button onclick="confirmRevPartial()" style="width:100%;background:var(--green);color:white;border:none;border-radius:9px;padding:10px;font-family:'Tajawal',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer">تأكيد</button>
+    </div>
+
+    <button onclick="closeRevResult()" style="width:100%;background:none;border:none;color:var(--td);font-family:'Tajawal',sans-serif;font-size:.82rem;cursor:pointer">إلغاء</button>
+  </div>
+</div>
+
+<!-- RATING POPUP -->
+<div class="mo" id="ratingOverlay">
+  <div class="modal" style="text-align:center;padding:28px 20px 34px">
+    <div class="mh"></div>
+    <div style="font-size:1.8rem;margin-bottom:8px" id="ratingIcon">📗</div>
+    <div style="font-family:'Amiri',serif;font-size:1.2rem;color:var(--gd);margin-bottom:6px" id="ratingTitle">كيف كان حفظك اليوم؟</div>
+    <div style="font-size:.8rem;color:var(--td);margin-bottom:20px">اختر تقييمك</div>
+    <div style="display:flex;justify-content:center;gap:10px;margin-bottom:22px" id="ratingStars">
+      <button onclick="selectRating(1)" class="star-btn">⭐</button>
+      <button onclick="selectRating(2)" class="star-btn">⭐</button>
+      <button onclick="selectRating(3)" class="star-btn">⭐</button>
+      <button onclick="selectRating(4)" class="star-btn">⭐</button>
+      <button onclick="selectRating(5)" class="star-btn">⭐</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--td);margin-bottom:20px;padding:0 4px">
+      <span>ضعيف</span><span>متوسط</span><span>ممتاز</span>
+    </div>
+    <div id="ratingLabel" style="font-size:.85rem;font-weight:700;color:var(--gd);min-height:22px;margin-bottom:14px"></div>
+    <button id="ratingConfirm" onclick="confirmRating()" style="width:100%;background:var(--green);color:white;border:none;border-radius:10px;padding:13px;font-family:'Tajawal',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;opacity:.4" disabled>تأكيد</button>
+    <button onclick="closeRating()" style="width:100%;background:none;border:none;color:var(--td);font-family:'Tajawal',sans-serif;font-size:.82rem;cursor:pointer;margin-top:10px">تخطي</button>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -427,16 +682,148 @@ function wajhShort(pageNum){
 }
 
 // ===================== STATE =====================
-let prog=JSON.parse(localStorage.getItem('qpro2')||'{}');
-let streak=parseInt(localStorage.getItem('qstreak')||'0');
-let lastDate=localStorage.getItem('qlastdate')||''
-let dlog=JSON.parse(localStorage.getItem('qdlog')||'{}');
-let hCur=parseInt(localStorage.getItem('qhcur')||'0');// 0=not set
-let rCur=parseInt(localStorage.getItem('qrcur')||'0');
-let cFilt='all'
-let editS=null
-let ST=JSON.parse(localStorage.getItem('qst')||JSON.stringify({hW:1,hPage:0,rW:2,rPage:0}));
+let prog={};
+let streak=0;
+let lastDate='';
+let dlog={};
+let hCur=0;
+let rCur=0;
+let cFilt='all';
+let editS=null;
+let ST={hW:1,hPage:0,rW:2,rPage:0};
 const TODAY=new Date().toISOString().split('T')[0];
+let _currentUser=null;
+let _dbSaveTimer=null;
+
+// ===================== FIREBASE DB =====================
+function getDocRef(){
+  if(!_currentUser) return null;
+  return window._fbDoc(window._fbDb, `users/${_currentUser.uid}/progress/main`);
+}
+
+function saveDB(){
+  if(!_currentUser) return;
+  clearTimeout(_dbSaveTimer);
+  _dbSaveTimer = setTimeout(async()=>{
+    try{
+      const ref = getDocRef();
+      const data = {
+        prog, streak, lastDate, dlog, hCur, rCur, ST,
+        note: document.getElementById('qNote')?.value||'',
+        notifTime: document.getElementById('notifTime')?.value||'07:00',
+        dark: document.body.classList.contains('dark'),
+        restDay: parseInt(document.getElementById('restDay')?.value||'-1'),
+        updatedAt: new Date().toISOString()
+      };
+      // Save week day flags
+      const days={};
+      for(let i=0;i<30;i++){
+        const d=new Date(); d.setDate(d.getDate()-i);
+        const ds=d.toISOString().split('T')[0];
+        const v=localStorage.getItem('qday_'+ds);
+        if(v) days[ds]=v;
+      }
+      data.days=days;
+      await window._fbSetDoc(ref, data);
+      document.getElementById('syncStatus').textContent='✅ محفوظ في السحاب';
+      setTimeout(()=>{
+        const el=document.getElementById('syncStatus');
+        if(el) el.textContent='☁️ مزامنة تلقائية';
+      },2000);
+    }catch(e){
+      console.error('Save error:',e);
+      document.getElementById('syncStatus').textContent='⚠️ خطأ في الحفظ';
+    }
+  }, 800);
+}
+
+function loadFromData(data){
+  if(!data) return;
+  if(data.prog) prog=data.prog;
+  if(data.streak!==undefined) streak=data.streak;
+  if(data.lastDate) lastDate=data.lastDate;
+  if(data.dlog) dlog=data.dlog;
+  if(data.hCur) hCur=data.hCur;
+  if(data.rCur) rCur=data.rCur;
+  if(data.ST) ST=data.ST;
+  if(data.note && document.getElementById('qNote')) document.getElementById('qNote').value=data.note;
+  if(data.notifTime && document.getElementById('notifTime')) document.getElementById('notifTime').value=data.notifTime;
+  if(data.dark) document.body.classList.add('dark');
+  if(data.restDay!==undefined && document.getElementById('restDay')) document.getElementById('restDay').value=data.restDay;
+  if(data.days) Object.entries(data.days).forEach(([k,v])=>localStorage.setItem('qday_'+k,v));
+  // re-render
+  buildSelects();
+  loadSUI();
+  updateStreak();
+  renderDate();
+  renderToday();
+  renderSurahs();
+  renderStats();
+  renderDots();
+  renderSum();
+  renderWeekStats();
+  renderCal();
+  renderRep();
+  renderTathbeet();
+  initNotif();
+  loadRestDay();
+}
+
+// ===================== AUTH =====================
+window.onFirebaseAuthChange = async function(user){
+  _currentUser = user;
+  if(user){
+    // Show user bar
+    document.getElementById('loginScreen').style.display='none';
+    document.querySelector('.wrap').style.display='';
+    const ub=document.getElementById('userBar');
+    ub.style.display='flex';
+    document.getElementById('userName').textContent=user.displayName||user.email;
+    const av=document.getElementById('userAvatar');
+    if(user.photoURL){av.src=user.photoURL;av.style.display='';}
+    document.getElementById('syncStatus').textContent='🔄 جارٍ التحميل...';
+
+    // Subscribe to real-time updates
+    window._fbUnsubSnapshot();
+    const ref = getDocRef();
+    const unsub = window._fbOnSnapshot(ref, (snap)=>{
+      if(snap.exists()){
+        loadFromData(snap.data());
+        document.getElementById('syncStatus').textContent='☁️ مزامنة تلقائية';
+      } else {
+        // New user - init with defaults
+        document.getElementById('syncStatus').textContent='✨ مرحباً! جارٍ الإعداد...';
+        buildSelects();loadSUI();updateStreak();renderDate();
+        renderToday();renderSurahs();renderStats();renderDots();renderSum();
+        renderWeekStats();renderCal();renderRep();renderTathbeet();
+        initNotif();loadRestDay();
+        saveDB();
+        document.getElementById('syncStatus').textContent='☁️ مزامنة تلقائية';
+      }
+    });
+    window._fbSetUnsubSnapshot(unsub);
+  } else {
+    // Not signed in - show login
+    document.getElementById('loginScreen').style.display='flex';
+    document.querySelector('.wrap').style.display='none';
+    document.getElementById('userBar').style.display='none';
+    window._fbUnsubSnapshot();
+  }
+};
+
+function signInGoogle(){
+  const errEl=document.getElementById('loginError');
+  errEl.style.display='none';
+  window._fbSignInWithPopup(window._fbAuth, window._fbGoogleProvider)
+    .catch(e=>{ errEl.textContent='⚠️ '+e.message; errEl.style.display='block'; });
+}
+
+function doSignOut(){
+  if(confirm('هل تريد تسجيل الخروج؟')){
+    window._fbUnsubSnapshot();
+    window._fbSignOut(window._fbAuth);
+  }
+}
 
 function init(){
   buildSelects();
@@ -448,7 +835,7 @@ function init(){
   renderStats();
   renderDots();
   renderSum();
-  document.getElementById('qNote').value=localStorage.getItem('qnote')||''
+  // note loaded from Firebase
   const dp=new URLSearchParams(window.location.search).get('d');
   if(dp) loadEnc(dp);
 }
@@ -499,9 +886,9 @@ function updateStreak(){
   if(lastDate===yd)streak++;else if(lastDate&&lastDate!==TODAY)streak=0;
   lastDate=TODAY;saveSt();
 }
-function saveSt(){localStorage.setItem('qstreak',streak);localStorage.setItem('qlastdate',TODAY);}
+function saveSt(){saveDB();}
 function markToday(){
-  if(localStorage.getItem('qlastdate')!==TODAY){streak=Math.max(1,streak);lastDate=TODAY;saveSt();}
+  if(lastDate!==TODAY){streak=Math.max(1,streak);lastDate=TODAY;saveDB();}
   localStorage.setItem('qday_'+TODAY,'1');renderDots();
 }
 function renderDots(){
@@ -521,17 +908,48 @@ function renderDots(){
 }
 
 // ===================== RENDER TODAY =====================
+function getMissedPages(isRev){
+  const missed = [];
+  const maxDaysBack = 3;
+  for(let i=1; i<=maxDaysBack; i++){
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    if(isRestDay(ds)) continue; // skip rest days
+    const log = dlog[ds]||{};
+    if(isRev){
+      if(log.rPlan && !log.rDone){
+        log.rPlan.pages.forEach(p => { if(!missed.includes(p)) missed.push(p); });
+      }
+    } else {
+      if(log.hPlan && !log.hDone){
+        log.hPlan.pages.forEach(p => { if(!missed.includes(p)) missed.push(p); });
+      }
+    }
+  }
+  return missed;
+}
+
 function renderToday(){
   const log=dlog[TODAY]||{};
 
-  // compute plans if not set
+  // collect missed pages from previous days
+  const missedHaf = getMissedPages(false);
+  const missedRev = getMissedPages(true);
+
+  // compute today's plan
   if(!log.hPlan && hCur>0){
-    log.hPlan=computePlan(hCur, ST.hW||1);
+    const todayPages = computePlan(hCur, ST.hW||1).pages;
+    // prepend missed pages (avoid duplicates)
+    const allPages = [...new Set([...missedHaf, ...todayPages])];
+    log.hPlan = {pages: allPages, hasMissed: missedHaf.length > 0};
   }
   if(!log.rPlan && rCur>0){
-    log.rPlan=computePlan(rCur, ST.rW||2);
+    const todayPages = computePlan(rCur, ST.rW||2).pages;
+    const allPages = [...new Set([...missedRev, ...todayPages])];
+    log.rPlan = {pages: allPages, hasMissed: missedRev.length > 0};
   }
-  dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+  dlog[TODAY]=log;saveDB();
 
   // HAF
   const hBtn=document.getElementById('hBtn');
@@ -544,8 +962,9 @@ function renderToday(){
     hBtn.style.display='none';
   } else if(log.hPlan){
     const pl=log.hPlan;
+    const missedCount = missedHaf.length;
     hSub.textContent=pl.pages.length>1?`الأوجه ${pl.pages[0]}–${pl.pages[pl.pages.length-1]}`:`الوجه ${pl.pages[0]}`;
-    hCard.innerHTML=renderPlanCard(pl,false,log.hDone);
+    hCard.innerHTML=(missedCount>0&&!log.hDone?`<div style="background:#FFF4E8;border:1.5px solid #FFBB80;border-radius:9px;padding:7px 11px;margin-bottom:8px;font-size:.75rem;color:#7A3800;font-weight:700">⚠️ يشمل ${missedCount} وجه فائت من أيام سابقة</div>`:'') + renderPlanCard(pl,false,log.hDone) + (log.hDone&&log.hRating?`<div style="margin-top:6px;font-size:.8rem;color:var(--gd);font-weight:700">${'⭐'.repeat(log.hRating)} ${ratingLabels[log.hRating]||''}</div>`:'');
     hBtn.style.display='';
     if(log.hDone){hBtn.className='cbtn cbtn-h done';hBtn.textContent='✓ تم — اضغط للإلغاء';}
     else{hBtn.className='cbtn cbtn-h';hBtn.textContent='✓ أنهيت حفظ اليوم';}
@@ -561,11 +980,30 @@ function renderToday(){
     rCard.innerHTML='';rBtn.style.display='none';
   } else if(log.rPlan){
     const pl=log.rPlan;
+    const missedCount = missedRev.length;
     rSub.textContent=pl.pages.length>1?`الأوجه ${pl.pages[0]}–${pl.pages[pl.pages.length-1]}`:`الوجه ${pl.pages[0]}`;
-    rCard.innerHTML=renderPlanCard(pl,true,log.rDone);
+    // Build one-line description
+    const firstRevW=WAJH[pl.pages[0]-1];
+    const lastRevW=WAJH[pl.pages[pl.pages.length-1]-1];
+    const revOneLine = firstRevW&&lastRevW ?
+      (pl.pages.length>1 ?
+        `الأوجه ${pl.pages[0]}–${pl.pages[pl.pages.length-1]} | ${sname(firstRevW[1])} آية ${firstRevW[2]} – ${sname(lastRevW[3])} آية ${lastRevW[4]}` :
+        `الوجه ${pl.pages[0]} | ${sname(firstRevW[1])} آية ${firstRevW[2]}–${firstRevW[4]}`)
+      : `الوجه ${pl.pages[0]}`;
+    // Status badge
+    let statusBadge='';
+    if(log.rDone){
+      if(log.rResult==='full') statusBadge=`<span style="background:var(--gm);color:var(--gd);border-radius:7px;padding:2px 9px;font-size:.72rem;font-weight:700">✅ مكتمل</span>`;
+      else if(log.rResult==='partial') statusBadge=`<span style="background:var(--ym);color:#6A4A00;border-radius:7px;padding:2px 9px;font-size:.72rem;font-weight:700">📝 جزئي (وجه ${log.rPartFrom}–${log.rPartTo})</span><span style="background:#FFE0E0;color:#C03030;border-radius:7px;padding:2px 9px;font-size:.72rem;font-weight:700;margin-right:5px">⚠️ تفريط ${log.rTafrit||0} وجه</span>`;
+      else if(log.rResult==='none') statusBadge=`<span style="background:#FFE0E0;color:#C03030;border-radius:7px;padding:2px 9px;font-size:.72rem;font-weight:700">❌ تفريط كامل</span>`;
+    }
+    rCard.innerHTML=`
+      <div style="font-size:.82rem;font-weight:700;color:var(--blue)">${revOneLine}</div>
+      ${statusBadge?`<div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:5px">${statusBadge}</div>`:''}
+      ${missedCount>0&&!log.rDone?`<div style="margin-top:6px;font-size:.72rem;color:#7A3800;font-weight:700">⚠️ يشمل ${missedCount} وجه فائت</div>`:''}`;
     rBtn.style.display='';
     if(log.rDone){rBtn.className='cbtn cbtn-r done';rBtn.textContent='✓ تم — اضغط للإلغاء';}
-    else{rBtn.className='cbtn cbtn-r';rBtn.textContent='✓ أنهيت المراجعة';}
+    else{rBtn.className='cbtn cbtn-r';rBtn.textContent='✓ تم';}
   }
 }
 
@@ -662,7 +1100,7 @@ function updateProgressFromWajh(pages, isRev){
       prog[sid]=p;
     }
   });
-  localStorage.setItem('qpro2',JSON.stringify(prog));
+  saveDB();
 }
 
 // ===================== COMPLETE =====================
@@ -671,43 +1109,102 @@ function doHaf(){
   if(log.hDone){
     log.hDone=false;
     if(log.hPlan) hCur=log.hPlan.pages[0];
-    localStorage.setItem('qhcur',hCur);
-    dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+    saveDB();
+    dlog[TODAY]=log;saveDB();
     renderToday();showT('تم إلغاء الحفظ');return;
   }
-  log.hDone=true;
-  if(log.hPlan){
-    const pages=log.hPlan.pages;
-    const next=((pages[pages.length-1])%604)+1;
-    hCur=next;localStorage.setItem('qhcur',hCur);
-    // ← auto-update surah progress
-    updateProgressFromWajh(pages, false);
-  }
-  dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
-  markToday();renderToday();renderStats();renderSum();
-  showT('✓ أحسنت! تم تسجيل الحفظ وتحديث السور');
+  // Show rating popup before completing
+  showRating('haf');
 }
 
 function doRev(){
   const log=dlog[TODAY]||{};
   if(log.rDone){
-    log.rDone=false;
+    log.rDone=false;log.rResult=null;log.rPartFrom=null;log.rPartTo=null;log.rTafrit=0;
     if(log.rPlan) rCur=log.rPlan.pages[0];
-    localStorage.setItem('qrcur',rCur);
-    dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+    saveDB();
+    dlog[TODAY]=log;saveDB();
     renderToday();showT('تم إلغاء المراجعة');return;
   }
-  log.rDone=true;
-  if(log.rPlan){
-    const pages=log.rPlan.pages;
-    const next=((pages[pages.length-1])%604)+1;
-    rCur=next;localStorage.setItem('qrcur',rCur);
-    // ← auto-update review progress
-    updateProgressFromWajh(pages, true);
+  // Show review result popup
+  document.getElementById('revPartialSel').style.display='none';
+  document.getElementById('revResultOverlay').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+
+function revResult(type){
+  if(type==='partial'){
+    // Show partial selector
+    const log=dlog[TODAY]||{};
+    const pages=log.rPlan?log.rPlan.pages:[];
+    document.getElementById('revPartFrom').value=pages[0]||1;
+    document.getElementById('revPartTo').value=pages[0]||1;
+    document.getElementById('revPartFrom').min=pages[0]||1;
+    document.getElementById('revPartTo').max=pages[pages.length-1]||604;
+    document.getElementById('revPartialSel').style.display='block';
+    return;
   }
-  dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+  closeRevResult();
+  const log=dlog[TODAY]||{};
+  log.rDone=true;log.rResult=type;
+  if(type==='full'){
+    if(log.rPlan){
+      const pages=log.rPlan.pages;
+      const next=((pages[pages.length-1])%604)+1;
+      rCur=next;saveDB();
+      updateProgressFromWajh(pages,true);
+    }
+    showT('✅ ممتاز! أنجزت المراجعة كاملة');
+  } else if(type==='none'){
+    log.rTafrit=(log.rPlan?log.rPlan.pages.length:0);
+    showT('❌ تم تسجيل التفريط');
+  }
+  dlog[TODAY]=log;saveDB();
   markToday();renderToday();renderStats();renderSum();
-  showT('✓ ممتاز! تمت المراجعة وتحديث السور');
+}
+
+function confirmRevPartial(){
+  const from=parseInt(document.getElementById('revPartFrom').value)||1;
+  const to=parseInt(document.getElementById('revPartTo').value)||1;
+  closeRevResult();
+  const log=dlog[TODAY]||{};
+  log.rDone=true;log.rResult='partial';log.rPartFrom=from;log.rPartTo=to;
+  const totalPages=log.rPlan?log.rPlan.pages.length:0;
+  const donePages=Math.max(0,to-from+1);
+  log.rTafrit=Math.max(0,totalPages-donePages);
+  // Advance cursor
+  if(log.rPlan){
+    const next=(to%604)+1;
+    rCur=next;saveDB();
+  }
+  dlog[TODAY]=log;saveDB();
+  markToday();renderToday();renderStats();renderSum();
+  showT(`📝 جزئي — تفريط ${log.rTafrit} وجه`);
+}
+
+function closeRevResult(){
+  document.getElementById('revResultOverlay').classList.remove('on');
+  document.body.style.overflow='';
+}
+
+function completeHafWithRating(stars){
+  const log=dlog[TODAY]||{};
+  log.hDone=true;
+  log.hRating=stars;
+  if(log.hPlan){
+    const pages=log.hPlan.pages;
+    const next=((pages[pages.length-1])%604)+1;
+    hCur=next;saveDB();
+    updateProgressFromWajh(pages, false);
+  }
+  dlog[TODAY]=log;saveDB();
+  markToday();renderToday();renderStats();renderSum();
+  renderRep();renderTathbeet();
+  showT('✓ أحسنت! تقييمك: '+(stars?'⭐'.repeat(stars):'بدون تقييم'));
+}
+
+function completeRevWithRating(stars){
+  // Not used for rev anymore — kept for compatibility
 }
 
 // ===================== SETTINGS =====================
@@ -715,12 +1212,12 @@ function saveS(){
   const hPage=parseInt(document.getElementById('sHPage').value)||1;
   const rPage=parseInt(document.getElementById('sRPage').value)||1;
   ST={hW:parseInt(document.getElementById('sHW').value)||1,hPage,rW:parseInt(document.getElementById('sRW').value)||2,rPage};
-  localStorage.setItem('qst',JSON.stringify(ST));
+  saveDB();
   hCur=hPage;rCur=rPage;
-  localStorage.setItem('qhcur',hCur);localStorage.setItem('qrcur',rCur);
+  saveDB();saveDB();
   const log=dlog[TODAY]||{};
   log.hDone=false;log.rDone=false;log.hPlan=null;log.rPlan=null;
-  dlog[TODAY]=log;localStorage.setItem('qdlog',JSON.stringify(dlog));
+  dlog[TODAY]=log;saveDB();
   renderToday();showT('✓ تم الحفظ — الخطة محدّثة');
 }
 
@@ -788,7 +1285,9 @@ function SW(n,btn){
   btn.classList.add('on');document.getElementById('tp-'+n).classList.add('on');
   if(n==='surahs')renderSurahs();
   if(n==='stats'){renderStats();renderSum();renderDots();}
-  if(n==='settings')loadSUI();
+  if(n==='settings'){loadSUI();loadRestDay();}
+  if(n==='today'){renderWeekStats();renderCal();}
+  if(n==='week'){weekOffset=0;renderWeekPlan();}
 }
 
 // ===================== MODAL =====================
@@ -817,24 +1316,32 @@ function saveM(){
   if(!editS)return;const sid=editS;
   const hs=document.getElementById('mHS').value;const rs=document.getElementById('mRS').value;
   prog[sid]={hafStatus:hs,hafFrom:hs==='partial'?parseInt(document.getElementById('mHF').value):null,hafTo:hs==='partial'?parseInt(document.getElementById('mHT').value):null,hafQuality:document.getElementById('mHQ').value,hafNote:document.getElementById('mHN').value,revStatus:rs,revFrom:rs==='partial'?parseInt(document.getElementById('mRF').value):null,revTo:rs==='partial'?parseInt(document.getElementById('mRT').value):null,revDate:document.getElementById('mRD').value,revNote:document.getElementById('mRN').value};
-  localStorage.setItem('qpro2',JSON.stringify(prog));
+  saveDB();
   closeM();renderSurahs();renderStats();renderSum();
   showT('✓ تم تحديث سورة '+(SURAHS.find(x=>x.id===sid)?.n||'')+'');markToday();
 }
 document.getElementById('mOverlay').addEventListener('click',function(e){if(e.target===this)closeM();})
 
 // ===================== NOTE =====================
-function saveNote(){localStorage.setItem('qnote',document.getElementById('qNote').value);showT('✓ تم حفظ الملاحظة');}
+function saveNote(){saveDB();showT('✓ تم حفظ الملاحظة');}
 
 // ===================== TOAST =====================
 function showT(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2800);}
 
 // ===================== SYNC =====================
 function copyL(){
-  const all={prog,streak,lastDate,ST,dlog,hCur,rCur,note:localStorage.getItem('qnote')||''};
+  const all={prog,streak,lastDate,ST,dlog,hCur,rCur,note:document.getElementById('qNote')?.value||''};
   const enc=btoa(encodeURIComponent(JSON.stringify(all)));
   const url=window.location.href.split('?')[0]+'?d='+enc;
   navigator.clipboard.writeText(url).then(()=>showT('✓ تم نسخ الرابط')).catch(()=>prompt('انسخ الرابط:',url));
+}
+
+function copyViewL(){
+  // View-only link — adds view=1 flag
+  const all={prog,streak,lastDate,ST,dlog,hCur,rCur};
+  const enc=btoa(encodeURIComponent(JSON.stringify(all)));
+  const url=window.location.href.split('?')[0]+'?view=1&d='+enc;
+  navigator.clipboard.writeText(url).then(()=>showT('✓ تم نسخ رابط المتابعة')).catch(()=>prompt('انسخ الرابط:',url));
 }
 function importL(){
   const dp=new URLSearchParams(window.location.search).get('d');
@@ -846,20 +1353,573 @@ function importL(){
 function loadEnc(enc){
   try{
     const d=JSON.parse(decodeURIComponent(atob(enc)));
-    if(d.prog){prog=d.prog;localStorage.setItem('qpro2',JSON.stringify(prog));}
-    if(d.streak!==undefined){streak=d.streak;localStorage.setItem('qstreak',streak);}
-    if(d.lastDate){lastDate=d.lastDate;localStorage.setItem('qlastdate',lastDate);}
-    if(d.ST){ST=d.ST;localStorage.setItem('qst',JSON.stringify(ST));}
-    if(d.dlog){dlog=d.dlog;localStorage.setItem('qdlog',JSON.stringify(dlog));}
-    if(d.hCur){hCur=d.hCur;localStorage.setItem('qhcur',hCur);}
-    if(d.rCur){rCur=d.rCur;localStorage.setItem('qrcur',rCur);}
-    if(d.note)localStorage.setItem('qnote',d.note);
+    if(d.prog){prog=d.prog;saveDB();}
+    if(d.streak!==undefined) streak=d.streak;
+    if(d.lastDate) lastDate=d.lastDate;
+    if(d.ST){ST=d.ST;saveDB();}
+    if(d.dlog){dlog=d.dlog;saveDB();}
+    if(d.hCur){hCur=d.hCur;saveDB();}
+    if(d.rCur){rCur=d.rCur;saveDB();}
+    
     loadSUI();renderToday();renderSurahs();renderStats();renderSum();renderDots();
     showT('✅ تم استيراد البيانات!');window.history.replaceState({},'',window.location.pathname);
   }catch{showT('⚠️ خطأ في البيانات');}
 }
 
+// ===================== NOTIFICATIONS =====================
+function initNotif(){
+  try{
+    const time = document.getElementById('notifTime')?.value||'07:00';
+    document.getElementById('notifTime').value = time;
+    updateNotifStatus();
+    scheduleNotif();
+  }catch(e){}
+}
+
+function updateNotifStatus(){
+  try{
+    const el = document.getElementById('notifStatus');
+    if(!el) return;
+    if(typeof Notification === 'undefined' || !('Notification' in window)){
+      el.textContent = '⚠️ افتح الموقع من Safari وأضفه للشاشة الرئيسية لتفعيل الإشعارات';
+      el.style.color = 'var(--orange)';
+      document.getElementById('notifBtn').style.display='none';
+      return;
+    }
+    if(Notification.permission === 'granted'){
+      const time = document.getElementById('notifTime')?.value||'07:00';
+      el.textContent = `✅ الإشعارات مفعّلة — يومياً الساعة ${time}`;
+      el.style.color = 'var(--green)';
+      document.getElementById('notifBtn').textContent = 'مفعّل ✓';
+      document.getElementById('notifBtn').style.background = 'var(--gm)';
+      document.getElementById('notifBtn').style.color = 'var(--gd)';
+    } else if(Notification.permission === 'denied'){
+      el.textContent = '❌ تم رفض الإشعارات — افتح إعدادات المتصفح للسماح بها';
+      el.style.color = '#D43F3F';
+      document.getElementById('notifBtn').style.display='none';
+    } else {
+      el.textContent = 'اضغط "تفعيل" للسماح بالإشعارات اليومية';
+      el.style.color = 'var(--td)';
+    }
+  }catch(e){}
+}
+
+function requestNotif(){
+  try{
+    if(typeof Notification === 'undefined' || !('Notification' in window)){
+      showT('⚠️ افتح الموقع من Safari وأضفه للشاشة الرئيسية أولاً');
+      return;
+    }
+    Notification.requestPermission().then(perm => {
+      if(perm === 'granted'){
+        showT('✅ تم تفعيل الإشعارات!');
+        updateNotifStatus();
+        scheduleNotif();
+        setTimeout(()=>{
+          try{
+            new Notification('متابعة حفظ القرآن 📖', {
+              body: 'تم تفعيل الإشعارات بنجاح! ستصلك تذكيرات يومياً 🎉',
+            });
+          }catch(e){}
+        }, 500);
+      } else {
+        showT('⚠️ لم يتم السماح بالإشعارات');
+        updateNotifStatus();
+      }
+    });
+  }catch(e){ showT('⚠️ افتح الموقع من Safari أولاً'); }
+}
+
+function saveNotifTime(){
+  try{
+    const time = document.getElementById('notifTime').value;
+    saveDB();
+    scheduleNotif();
+    updateNotifStatus();
+    showT('✓ تم حفظ وقت التذكير');
+  }catch(e){}
+}
+
+function scheduleNotif(){
+  try{
+    if(typeof Notification === 'undefined') return;
+    if(Notification.permission !== 'granted') return;
+    if(window._notifTimer) clearTimeout(window._notifTimer);
+    const time = document.getElementById('notifTime')?.value||'07:00';
+    const [h, m] = time.split(':').map(Number);
+    const now = new Date();
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+    if(target <= now) target.setDate(target.getDate() + 1);
+    const ms = target - now;
+    window._notifTimer = setTimeout(()=>{
+      fireNotif();
+      scheduleNotif();
+    }, ms);
+  }catch(e){}
+}
+
+function fireNotif(){
+  try{
+    if(typeof Notification === 'undefined') return;
+    if(Notification.permission !== 'granted') return;
+    const log = dlog[TODAY]||{};
+    let body = '';
+    if(!log.hDone && !log.rDone){
+      body = 'لم تُكمل حفظك ومراجعتك اليوم بعد 📖';
+    } else if(!log.hDone){
+      body = 'أتممت المراجعة ✅ — تبقى الحفظ اليوم 📗';
+    } else if(!log.rDone){
+      body = 'أتممت الحفظ ✅ — تبقى المراجعة اليوم 🔄';
+    } else {
+      body = 'أحسنت! أتممت حفظك ومراجعتك اليوم 🎉';
+    }
+    new Notification('متابعة حفظ القرآن الكريم 📖', {body});
+  }catch(e){}
+}
+
+// ===================== REPETITION (تكرار) =====================
+function renderRep(){
+  const log=dlog[TODAY]||{};
+  const repBtn=document.getElementById('repBtn');
+  const repCard=document.getElementById('repCard');
+  if(!repBtn||!repCard) return;
+  if(!log.hDone){
+    repCard.textContent='أنهِ حفظ اليوم أولاً لتفعيل التكرار';
+    repCard.style.color='var(--td)';
+    repBtn.style.display='none';return;
+  }
+  const pages=log.hPlan?log.hPlan.pages:[];
+  const desc=pages.map(p=>{const w=WAJH[p-1];return w?`وجه ${p} — ${sname(w[1])}`:''}).join(' + ');
+  repCard.innerHTML=`<div style="font-family:'Amiri',serif;font-size:.95rem;color:var(--text);font-weight:700">${desc}</div>
+    <div style="font-size:.7rem;color:var(--td);margin-top:3px">سجّل عدد مرات التكرار في الملاحظات 📝</div>`;
+  repBtn.style.display='';
+  if(log.repDone){
+    repBtn.style.background='var(--ym)';repBtn.style.color='#6A4A00';
+    repBtn.textContent='✓ تم التكرار — اضغط للإلغاء';
+  }else{
+    repBtn.style.background='var(--yellow)';repBtn.style.color='white';
+    repBtn.textContent='🔁 أنهيت التكرار';
+  }
+}
+function doRep(){
+  const log=dlog[TODAY]||{};
+  if(!log.hDone){showT('أنهِ الحفظ أولاً');return;}
+  log.repDone=!log.repDone;
+  dlog[TODAY]=log;saveDB();
+  renderRep();
+  showT(log.repDone?'🔁 أحسنت! تم التكرار':'تم إلغاء التكرار');
+}
+
+// ===================== TATHBEET (تثبيت) =====================
+function getTathbeetPages(){
+  const pages=[];
+  const today=new Date();
+  for(let i=1;i<=90;i++){
+    const d=new Date(today);d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    const log=dlog[ds]||{};
+    if(log.hDone&&log.hPlan){
+      log.hPlan.pages.forEach(p=>{if(!pages.includes(p))pages.push(p);});
+    }
+    if(pages.length>=20)break;
+  }
+  return pages.slice(0,20).reverse();
+}
+function renderTathbeet(){
+  const tCard=document.getElementById('tCard');
+  const tBtn=document.getElementById('tBtn');
+  const tSub=document.getElementById('tSub');
+  if(!tCard||!tBtn) return;
+  const pages=getTathbeetPages();
+  const log=dlog[TODAY]||{};
+  if(pages.length===0){
+    tSub.textContent='لا يوجد تثبيت — ابدأ من اليوم الثاني';
+    tCard.innerHTML=`<div style="color:var(--td);font-size:.78rem;text-align:center;padding:4px 0">سيظهر التثبيت غداً بعد إتمام حفظ اليوم 😊</div>`;
+    tBtn.style.display='none';return;
+  }
+  tSub.textContent=`${pages.length} وجه للتثبيت`;
+  const firstW=WAJH[pages[0]-1];const lastW=WAJH[pages[pages.length-1]-1];
+  const rangeDesc=firstW&&lastW?`من وجه ${pages[0]} (${sname(firstW[1])}) إلى وجه ${pages[pages.length-1]} (${sname(lastW[1])})`:'';
+  tCard.innerHTML=`
+    <div style="font-size:.82rem;font-weight:700;color:#2040A0;margin-bottom:5px">${rangeDesc}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+      ${pages.map(p=>`<span style="background:#E8ECFF;color:#2040A0;border-radius:6px;padding:2px 7px;font-size:.68rem;font-weight:700">وجه ${p}</span>`).join('')}
+    </div>
+    ${log.tDone&&log.tRating?`<div style="margin-top:8px;font-size:.8rem;font-weight:700;color:#2040A0">${'⭐'.repeat(log.tRating)} ${ratingLabels[log.tRating]||''}</div>`:''}`;
+  tBtn.style.display='';
+  if(log.tDone){tBtn.style.background='#D0D8FF';tBtn.style.color='#2040A0';tBtn.textContent='✓ تم التثبيت — اضغط للإلغاء';}
+  else{tBtn.style.background='#3050C0';tBtn.style.color='white';tBtn.textContent='🧠 أنهيت التثبيت';}
+}
+function doTathbeet(){
+  const log=dlog[TODAY]||{};
+  if(log.tDone){
+    log.tDone=false;log.tRating=0;
+    dlog[TODAY]=log;saveDB();
+    renderTathbeet();showT('تم إلغاء التثبيت');return;
+  }
+  _ratingType='tathbeet';_selectedRating=0;
+  document.getElementById('ratingIcon').textContent='🧠';
+  document.getElementById('ratingTitle').textContent='كيف كان تثبيتك اليوم؟';
+  document.getElementById('ratingLabel').textContent='';
+  document.getElementById('ratingConfirm').disabled=true;
+  document.getElementById('ratingConfirm').style.opacity='.4';
+  document.querySelectorAll('.star-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ratingOverlay').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function completeTathbeetWithRating(stars){
+  const log=dlog[TODAY]||{};
+  log.tDone=true;log.tRating=stars;
+  dlog[TODAY]=log;saveDB();
+  renderTathbeet();
+  showT('🧠 أحسنت! تم التثبيت'+(stars?` — ${'⭐'.repeat(stars)}`:''));
+}
+
+// ===================== RATING =====================
+let _ratingType = 'haf';
+let _selectedRating = 0;
+const ratingLabels = ['','ضعيف — يحتاج إعادة 😔','مقبول — فيه أخطاء 🙂','جيد — أحتاج تثبيت 👍','جيد جداً — أخطاء نادرة 😊','ممتاز — بلا أخطاء 🌟'];
+
+function showRating(type){
+  _ratingType = type;
+  _selectedRating = 0;
+  document.getElementById('ratingIcon').textContent = type==='haf' ? '📗' : '🔄';
+  document.getElementById('ratingTitle').textContent = type==='haf' ? 'كيف كان حفظك اليوم؟' : 'كيف كانت مراجعتك اليوم؟';
+  document.getElementById('ratingLabel').textContent = '';
+  document.getElementById('ratingConfirm').disabled = true;
+  document.getElementById('ratingConfirm').style.opacity = '.4';
+  document.querySelectorAll('.star-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ratingOverlay').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+
+function selectRating(n){
+  _selectedRating = n;
+  const btns = document.querySelectorAll('.star-btn');
+  btns.forEach((b,i)=>{ b.classList.toggle('active', i < n); });
+  document.getElementById('ratingLabel').textContent = ratingLabels[n];
+  document.getElementById('ratingConfirm').disabled = false;
+  document.getElementById('ratingConfirm').style.opacity = '1';
+}
+
+function confirmRating(){
+  closeRating();
+  if(_ratingType==='haf') completeHafWithRating(_selectedRating);
+  else if(_ratingType==='rev') completeRevWithRating(_selectedRating);
+  else if(_ratingType==='tathbeet') completeTathbeetWithRating(_selectedRating);
+}
+
+function closeRating(){
+  document.getElementById('ratingOverlay').classList.remove('on');
+  document.body.style.overflow='';
+  if(_selectedRating===0){
+    if(_ratingType==='haf') completeHafWithRating(0);
+    else if(_ratingType==='rev') completeRevWithRating(0);
+    else if(_ratingType==='tathbeet') completeTathbeetWithRating(0);
+  }
+}
+// ===================== VIEW MODE =====================
+function checkViewMode(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('view')!=='1') return false;
+  const d=params.get('d');
+  if(!d) return false;
+  try{
+    const data=JSON.parse(decodeURIComponent(atob(d)));
+    const vProg=data.prog||{};
+    const vStreak=data.streak||0;
+    const vDlog=data.dlog||{};
+    const vHCur=data.hCur||0;
+    document.querySelector('.wrap').style.display='none';
+    const viewer=document.getElementById('viewerScreen');
+    viewer.style.display='block';
+    const TODAY2=new Date().toISOString().split('T')[0];
+    const todayLog=vDlog[TODAY2]||{};
+    const days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+    const months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    const now=new Date();
+    const dateStr=`${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    let mem=0;
+    Object.values(vProg).forEach(p=>{if((p.hafStatus||'none')==='done')mem++;});
+    const pct=Math.round(mem/114*100);
+    const hDone=todayLog.hDone,rDone=todayLog.rDone,tDone=todayLog.tDone,repDone=todayLog.repDone;
+    const hPages=todayLog.hPlan?todayLog.hPlan.pages:[];
+    const hDesc=hPages.length>0?hPages.map(p=>{const w=WAJH[p-1];return w?`وجه ${p} (${sname(w[1])})`:''}).join(' + '):'—';
+    let wHaf=0,wRev=0;
+    for(let i=0;i<7;i++){const d2=new Date(now);d2.setDate(d2.getDate()-i);const ds=d2.toISOString().split('T')[0];const l=vDlog[ds]||{};if(l.hDone)wHaf++;if(l.rDone)wRev++;}
+    let revBadge='';
+    if(rDone){
+      if(todayLog.rResult==='full') revBadge='<span style="background:#E8F5EE;color:#1A6640;border-radius:7px;padding:2px 9px;font-size:.72rem;font-weight:700">✅ مكتمل</span>';
+      else if(todayLog.rResult==='partial') revBadge=`<span style="background:#FFF0B0;color:#6A4A00;border-radius:7px;padding:2px 9px;font-size:.72rem;font-weight:700">📝 جزئي</span> <span style="background:#FFE0E0;color:#C03030;border-radius:7px;padding:2px 9px;font-size:.72rem;font-weight:700">⚠️ تفريط ${todayLog.rTafrit||0}</span>`;
+      else if(todayLog.rResult==='none') revBadge='<span style="background:#FFE0E0;color:#C03030;border-radius:7px;padding:2px 9px;font-size:.72rem;font-weight:700">❌ تفريط كامل</span>';
+    }
+    viewer.innerHTML=`<div style="max-width:500px;margin:0 auto;padding:20px 16px 40px;font-family:'Tajawal',sans-serif;direction:rtl">
+      <div style="text-align:center;padding:20px 0 16px;border-bottom:2px solid #A8D5B8;margin-bottom:20px">
+        <div style="font-family:'Amiri',serif;font-size:1.5rem;color:#1A6640;font-weight:700">خطة زياد بن محمد البابطين</div>
+        <div style="font-size:.75rem;color:#9CA3AF;margin-top:4px">${dateStr}</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;background:#FFF3CD;border:1px solid #FFD700;border-radius:20px;padding:4px 14px;font-size:.7rem;color:#856404;margin-top:8px;font-weight:700">👁️ وضع المتابعة — للعرض فقط</div>
+      </div>
+      <div style="background:#fff;border:1.5px solid #A8D5B8;border-radius:14px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-family:'Amiri',serif;color:#1A6640">📖 التقدم العام</span><span style="font-weight:800;color:#2E8B57">${pct}%</span></div>
+        <div style="background:#E8F5EE;border-radius:100px;height:11px;overflow:hidden;margin-bottom:5px"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#1A6640,#2E8B57);border-radius:100px"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#9CA3AF"><span>البداية</span><span>${mem} / 114 سورة</span><span>الختم</span></div>
+      </div>
+      <div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;overflow:hidden;margin-bottom:12px">
+        <div style="background:#E8F5EE;padding:10px 14px;font-family:'Amiri',serif;font-size:.98rem;color:#1A6640;font-weight:700">📅 إنجاز اليوم</div>
+        <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:${hDone?'#C5E8D4':'#F3F4F6'};border-radius:10px;padding:11px;text-align:center">
+            <div style="font-size:1.3rem">${hDone?'✅':'⏳'}</div>
+            <div style="font-size:.72rem;font-weight:700;color:${hDone?'#1A6640':'#9CA3AF'};margin-top:3px">📗 الحفظ</div>
+            ${hDone&&todayLog.hRating?`<div style="font-size:.68rem">${'⭐'.repeat(todayLog.hRating)}</div>`:''}
+          </div>
+          <div style="background:${rDone?'#DBEAFE':'#F3F4F6'};border-radius:10px;padding:11px;text-align:center">
+            <div style="font-size:1.3rem">${rDone?'✅':'⏳'}</div>
+            <div style="font-size:.72rem;font-weight:700;color:${rDone?'#1D4ED8':'#9CA3AF'};margin-top:3px">🔄 المراجعة</div>
+            ${revBadge?`<div style="margin-top:3px">${revBadge}</div>`:''}
+          </div>
+          <div style="background:${repDone?'#FFF0B0':'#F3F4F6'};border-radius:10px;padding:11px;text-align:center">
+            <div style="font-size:1.2rem">${repDone?'✅':'⏳'}</div>
+            <div style="font-size:.7rem;font-weight:700;color:${repDone?'#6A4A00':'#9CA3AF'};margin-top:3px">🔁 التكرار</div>
+          </div>
+          <div style="background:${tDone?'#D0D8FF':'#F3F4F6'};border-radius:10px;padding:11px;text-align:center">
+            <div style="font-size:1.2rem">${tDone?'✅':'⏳'}</div>
+            <div style="font-size:.7rem;font-weight:700;color:${tDone?'#2040A0':'#9CA3AF'};margin-top:3px">🧠 التثبيت</div>
+            ${tDone&&todayLog.tRating?`<div style="font-size:.66rem;color:#2040A0">${'⭐'.repeat(todayLog.tRating)}</div>`:''}
+          </div>
+        </div>
+      </div>
+      ${hPages.length>0?`<div style="background:#fff;border:1.5px solid #A8D5B8;border-radius:12px;padding:12px;margin-bottom:12px">
+        <div style="font-size:.82rem;font-weight:700;color:#1A6640;margin-bottom:4px">📗 حفظ اليوم</div>
+        <div style="font-size:.78rem;color:#4B5563">${hDesc}</div>
+      </div>`:''}
+      <div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;overflow:hidden;margin-bottom:12px">
+        <div style="background:#E8F5EE;padding:10px 14px;font-family:'Amiri',serif;font-size:.98rem;color:#1A6640;font-weight:700">📊 إنجاز الأسبوع</div>
+        <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="text-align:center;background:#E8F5EE;border-radius:10px;padding:12px"><div style="font-size:1.8rem;font-weight:900;color:#2E8B57">${wHaf}</div><div style="font-size:.7rem;color:#4B5563">أيام حفظ</div></div>
+          <div style="text-align:center;background:#EFF6FF;border-radius:10px;padding:12px"><div style="font-size:1.8rem;font-weight:900;color:#2563EB">${wRev}</div><div style="font-size:.7rem;color:#4B5563">أيام مراجعة</div></div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;padding:14px;text-align:center">
+        <div style="font-size:2.4rem;font-weight:900;color:#D4700A">${vStreak}</div>
+        <div style="font-size:.75rem;color:#9CA3AF;margin-top:2px">🔥 يوم متتالي</div>
+      </div>
+    </div>`;
+    return true;
+  }catch(e){return false;}
+}
+
+// ===================== DARK MODE =====================
+function toggleDark(){
+  const isDark = document.body.classList.toggle('dark');
+  saveDB();
+  document.getElementById('darkBtn').textContent = isDark ? '☀️' : '🌙';
+}
+function initDark(){
+  if(document.body.classList.contains('dark')||false){
+    document.body.classList.add('dark');
+    document.getElementById('darkBtn').textContent='☀️';
+  }
+}
+
+// ===================== WEEKLY PLAN =====================
+let weekOffset = 0;
+
+function prevWeek(){ weekOffset--; renderWeekPlan(); }
+function nextWeek(){ weekOffset++; renderWeekPlan(); }
+
+function renderWeekPlan(){
+  const c = document.getElementById('weekPlanGrid');
+  const lbl = document.getElementById('weekLabel');
+  if(!c||!lbl) return;
+
+  const today = new Date();
+  // Get start of current week (Sunday)
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7));
+  startOfWeek.setHours(0,0,0,0);
+
+  const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+  // Format week label
+  const fmt = (d) => `${d.getDate()}/${d.getMonth()+1}`;
+  lbl.textContent = `${fmt(startOfWeek)} — ${fmt(endOfWeek)}`;
+
+  const todayStr = today.toISOString().split('T')[0];
+  let html = '';
+
+  for(let i=0; i<7; i++){
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    const ds = d.toISOString().split('T')[0];
+    const log = dlog[ds]||{};
+    const isToday = ds === todayStr;
+    const isPast = ds < todayStr;
+    const rest = isRestDay(ds);
+    const isFuture = ds > todayStr;
+
+    // Compute what plan was/is for this day
+    let hPages = log.hPlan ? log.hPlan.pages : null;
+    let rPages = log.rPlan ? log.rPlan.pages : null;
+
+    // For future days — estimate based on cursor
+    if(isFuture && !hPages && hCur>0){
+      const daysFromNow = Math.round((d - today) / 86400000);
+      const estimatedStart = ((hCur - 1 + daysFromNow * (ST.hW||1)) % 604) + 1;
+      hPages = computePlan(estimatedStart, ST.hW||1).pages;
+    }
+    if(isFuture && !rPages && rCur>0){
+      const daysFromNow = Math.round((d - today) / 86400000);
+      const estimatedStart = ((rCur - 1 + daysFromNow * (ST.rW||2)) % 604) + 1;
+      rPages = computePlan(estimatedStart, ST.rW||2).pages;
+    }
+
+    // Status colors
+    let headerBg = isToday ? 'var(--green)' : rest ? 'var(--ym)' : 'var(--gl)';
+    let headerColor = isToday ? 'white' : rest ? '#6A4A00' : 'var(--gd)';
+    let borderColor = isToday ? 'var(--green)' : 'var(--gray-b)';
+
+    html += `<div style="border:1.5px solid ${borderColor};border-radius:11px;margin-bottom:10px;overflow:hidden">
+      <div style="background:${headerBg};color:${headerColor};padding:8px 12px;font-weight:800;font-size:.82rem;display:flex;justify-content:space-between;align-items:center">
+        <span>${days[d.getDay()]} ${fmt(d)}</span>
+        <span style="font-size:.7rem">${isToday?'اليوم':rest?'😴 راحة':log.hDone&&log.rDone?'✓ مكتمل':isPast&&(log.hDone||log.rDone)?'جزئي':isPast?'لم يكتمل':isFuture?'مخطط':''}</span>
+      </div>
+      <div style="padding:9px 12px">`;
+
+    if(rest){
+      html += `<div style="text-align:center;color:var(--td);font-size:.78rem;padding:4px 0">يوم راحة 😴</div>`;
+    } else {
+      // Hafiz
+      html += `<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+        <span style="font-size:.7rem;background:${log.hDone?'var(--gm)':'var(--gray-l)'};color:${log.hDone?'var(--gd)':'var(--td)'};border-radius:6px;padding:2px 7px;font-weight:700">${log.hDone?'✓ حفظ':'📗 حفظ'}</span>
+        <span style="font-size:.75rem;color:var(--tm)">${hPages ? hPages.map(p=>{ const w=WAJH[p-1]; return w?`وجه ${p} (${sname(w[1])})`:'' }).join(' + ') : '—'}</span>
+      </div>`;
+      // Review
+      html += `<div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:.7rem;background:${log.rDone?'var(--bl)':'var(--gray-l)'};color:${log.rDone?'var(--blue)':'var(--td)'};border-radius:6px;padding:2px 7px;font-weight:700">${log.rDone?'✓ مراجعة':'🔄 مراجعة'}</span>
+        <span style="font-size:.75rem;color:var(--tm)">${rPages ? rPages.map(p=>{ const w=WAJH[p-1]; return w?`وجه ${p} (${sname(w[1])})`:'' }).join(' + ') : '—'}</span>
+      </div>`;
+    }
+
+    html += `</div></div>`;
+  }
+
+  c.innerHTML = html;
+}
+function saveRestDay(){
+  const v = parseInt(document.getElementById('restDay').value);
+  saveDB();
+  showT('✓ تم حفظ يوم الراحة');
+}
+function loadRestDay(){
+  const v = document.getElementById('restDay')?.value;
+  if(v !== null) document.getElementById('restDay').value = v;
+}
+function isRestDay(dateStr){
+  const restDay = parseInt(document.getElementById('restDay')?.value||'-1');
+  if(restDay === -1) return false;
+  const d = new Date(dateStr);
+  return d.getDay() === restDay;
+}
+
+// ===================== WEEKLY STATS =====================
+function renderWeekStats(){
+  const c = document.getElementById('weekStats');
+  if(!c) return;
+  const today = new Date();
+  let thisHaf=0, thisRev=0, lastHaf=0, lastRev=0;
+  for(let i=0; i<14; i++){
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    const log = dlog[ds]||{};
+    if(i < 7){
+      if(log.hDone) thisHaf++;
+      if(log.rDone) thisRev++;
+    } else {
+      if(log.hDone) lastHaf++;
+      if(log.rDone) lastRev++;
+    }
+  }
+  const hDiff = thisHaf - lastHaf;
+  const rDiff = thisRev - lastRev;
+  const arrow = (n) => n>0?`<span style="color:var(--green)">↑${n}</span>`:n<0?`<span style="color:#D43F3F">↓${Math.abs(n)}</span>`:`<span style="color:var(--td)">—</span>`;
+
+  c.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:var(--gl);border:1.5px solid var(--gb);border-radius:11px;padding:12px;text-align:center">
+        <div style="font-size:1.8rem;font-weight:900;color:var(--green)">${thisHaf}</div>
+        <div style="font-size:.72rem;color:var(--tm);margin-top:2px">📗 أيام حفظ هذا الأسبوع</div>
+        <div style="font-size:.7rem;margin-top:4px">${arrow(hDiff)} من الأسبوع الماضي</div>
+      </div>
+      <div style="background:var(--bl);border:1.5px solid var(--bb);border-radius:11px;padding:12px;text-align:center">
+        <div style="font-size:1.8rem;font-weight:900;color:var(--blue)">${thisRev}</div>
+        <div style="font-size:.72rem;color:var(--tm);margin-top:2px">🔄 أيام مراجعة هذا الأسبوع</div>
+        <div style="font-size:.7rem;margin-top:4px">${arrow(rDiff)} من الأسبوع الماضي</div>
+      </div>
+    </div>`;
+}
+
+// ===================== CALENDAR =====================
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function prevMonth(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCal(); }
+function nextMonth(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCal(); }
+
+function renderCal(){
+  const c = document.getElementById('calGrid');
+  const lbl = document.getElementById('calMonthLabel');
+  if(!c||!lbl) return;
+
+  const months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  lbl.textContent = `${months[calMonth]} ${calYear}`;
+
+  const firstDayRaw = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // In RTL grid, columns go right-to-left: س،ج،خ،أر،ث،اث،أح
+  // So headers reversed, and firstDay offset = (6 - firstDayRaw) % 7
+  const rtlHeaders = ['س','ج','خ','أر','ث','اث','أح'];
+  const firstDayOffset = (6 - firstDayRaw + 7) % 7; // empty cells before first day in RTL
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center">`;
+  // day headers (RTL order)
+  rtlHeaders.forEach(d=>{
+    html += `<div style="font-size:.62rem;color:var(--td);font-weight:700;padding:3px 0">${d}</div>`;
+  });
+  // empty cells before first day
+  for(let i=0;i<firstDayOffset;i++) html += `<div></div>`;
+  // days
+  for(let d=1;d<=daysInMonth;d++){
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const log = dlog[ds]||{};
+    const isToday = ds===todayStr;
+    const rest = isRestDay(ds);
+    let bg = 'var(--gray-l)', color='var(--td)', border='transparent';
+    if(rest){ bg='var(--ym)'; color='#6A4A00'; }
+    else if(log.hDone && log.rDone){ bg='var(--green)'; color='white'; }
+    else if(log.hDone || log.rDone){ bg='#FFE0C0'; color='#7A3800'; }
+    if(isToday) border='2px solid var(--gd)';
+    html += `<div style="background:${bg};color:${color};border-radius:6px;padding:5px 2px;font-size:.72rem;font-weight:${isToday?'900':'600'};border:${border}">${d}</div>`;
+  }
+  html += `</div>`;
+  c.innerHTML = html;
+}
+
+if(!checkViewMode()){
 init();
+initNotif();
+initDark();
+loadRestDay();
+renderWeekStats();
+renderCal();
+renderRep();
+renderTathbeet();
+}
 </script>
 </body>
 </html>
